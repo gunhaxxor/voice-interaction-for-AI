@@ -7,7 +7,7 @@
   //     audio: true,
   //   }
   // })
-  // const voices = window.speechSynthesis.getVoices();
+// const voices = window.speechSynthesis?.getVoices();
   // console.log(voices);
   const { isListening, start, stop, result, isFinal, error, recognition } = useSpeechRecognition({
     lang: 'sv-SE',
@@ -19,7 +19,7 @@
 
   const { utterance, speak, status: speechStatus, isPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesis(currentSpeechSynthText,{
     lang: 'sv-SE',
-    pitch: 4,
+    pitch: 8,
     rate: 1.4,
   });
   
