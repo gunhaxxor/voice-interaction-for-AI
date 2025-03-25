@@ -2,7 +2,33 @@
 import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
 
-import videoUrl from '~/assets/videos/160767-822213540_tiny.mp4';
+import video1 from '~/public/videos/189639-886016299_small.mp4';
+import video2 from '~/public/videos/160767-822213540_tiny.mp4';
+import video3 from '~/public/videos/29561-375947285_small.mp4';
+import video4 from '~/public/videos/29575-375947265_small.mp4';
+import video5 from '~/public/videos/71122-537102350_small.mp4';
+
+const videoUrls = shallowRef([
+  '/videos/189639-886016299_small.mp4',
+  '/videos/160767-822213540_tiny.mp4',
+  '/videos/29561-375947285_small.mp4',
+  '/videos/29575-375947265_small.mp4',
+  '/videos/71122-537102350_small.mp4',
+]);
+const { state: currentVideoUrl, next: nextVideoUrl } = useCycleList(videoUrls)
+
+const bgVideoRef = templateRef('backgroundVideo');
+onMounted(() => {
+  if (isDefined(bgVideoRef)) {
+    bgVideoRef.value.loop = true;
+    bgVideoRef.value.playbackRate = 0.7;
+    // bgVideoRef.value.addEventListener('ended', () => {
+    //   console.log('video ended');
+    //   bgVideoRef.value.playbackRate = -1;
+    //   bgVideoRef.value.play();
+    // })
+  }
+})
 
 // @ts-expect-error
 const chatComponent = templateRef('chatInput');
@@ -70,7 +96,6 @@ watch(result, () => {
     input.value = result.value;
   }
 })
-
 // const img = useImage();
 // const imgUrl = '~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg';
 
@@ -83,7 +108,7 @@ watch(result, () => {
 // })
 
 import type { CardProps } from '@nuxt/ui';
-const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }
+const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
 
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
@@ -100,11 +125,11 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 <template>
 
   <div class="">
-    <!-- <div class="absolute w-screen h-screen bg-amber-800">
-      <video loop="true" muted autoplay class="object-cover w-full h-full">
-        <source :src="videoUrl" type="video/mp4">
+    <div class="absolute w-screen h-screen">
+      <video ref="backgroundVideo" muted autoplay class="object-cover w-full h-full">
+        <source :src="currentVideoUrl" type="video/mp4">
       </video>
-    </div> -->
+    </div>
     <div class="fixed top-0 left-0 flex flex-col gap-4 p-3 max-w-72">
       <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Recognition status</template>
@@ -136,6 +161,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>status: </p>
           <p>{{ chatStatus }}</p>
+          <p>{{ currentVideoUrl }}</p>
         </div>
       </UCard>
     </div>
@@ -147,8 +173,11 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </div>
       </template>
     </div>
-    <form class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-md"
+    <form
+      class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
       @submit.prevent="handleSubmit">
+      <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
+        @click="nextVideoUrl()"></UButton>
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
@@ -167,11 +196,12 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
 <style lang="css" scoped>
 
-:global(body) {
-  /* background-color: oklch(from var(--ui-bg) L C H / 0.8); */
-  background-image: url('~/assets/images/ivan-bandura-2FEE6BR343k-unsplash.jpg');
+/* :global(body) {
+  background-color: oklch(from var(--ui-bg) L C H / 0.8);
+  background-image: v-bind(bgurl);
   background-blend-mode: soft-light;
   background-position: center;
   background-attachment: fixed;
 }
+*/
 </style>
