@@ -101,13 +101,39 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         <source :src="videoUrl" type="video/mp4">
       </video>
     </div> -->
-    <div class="fixed top-0 left-0 p-4 max-w-64">
-      <p>Listening: {{ isListening }}</p>
-      <p>Final: {{ isFinal }}</p>
-      <p>Error: {{ error }}</p>
-      <p>Result: {{ result }}</p>
-      <br />
-      <p>Chat status: {{ chatStatus }}</p>
+    <div class="fixed top-0 left-0 p-3 max-w-72 flex flex-col gap-4">
+      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+        <template #header>Recognition status</template>
+        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
+          <p>Listening: </p>
+          <p>{{ isListening }}</p>
+          <p>Final: </p>
+          <p>{{ isFinal }}</p>
+          <p>Error: </p>
+          <p>{{ error }}</p>
+          <p>Result: </p>
+          <p>{{ result }}</p>
+        </div>
+      </UCard>
+      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+        <template #header>Synthesis status</template>
+
+        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
+          <p>Playing: </p>
+          <p>{{ isPlaying }}</p>
+          <p>Error: </p>
+          <p>{{ speechError }}</p>
+          <p>Status: </p>
+          <p>{{ speechStatus }}</p>
+        </div>
+      </UCard>
+      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+        <template #header>Chat status</template>
+        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
+          <p>status: </p>
+          <p>{{ chatStatus }}</p>
+        </div>
+      </UCard>
     </div>
     <div ref="messageContainer" class="mx-auto mb-12 p-6 max-w-2xl flex flex-col gap-4 w-full">
       <template v-for="message in parsedMessages" :key="message.id">
