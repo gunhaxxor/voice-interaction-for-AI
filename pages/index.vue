@@ -125,12 +125,13 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 <template>
 
   <div class="">
-    <div class="absolute w-screen h-screen">
-      <video ref="backgroundVideo" muted autoplay class="object-cover w-full h-full">
-        <source :src="currentVideoUrl" type="video/mp4">
+    <div class="fixed w-screen h-screen">
+      <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
+        class="object-cover w-full h-full brightness-50 ">
+        <!-- <source :src="currentVideoUrl" type="video/mp4"> -->
       </video>
     </div>
-    <div class="fixed top-0 left-0 flex flex-col gap-4 p-3 max-w-72">
+    <div class="fixed top-0 left-0 flex flex-col gap-4 p-3 max-w-64">
       <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Recognition status</template>
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
@@ -165,7 +166,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </div>
       </UCard>
     </div>
-    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-12">
+    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-16">
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']"
@@ -178,10 +179,11 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       @submit.prevent="handleSubmit">
       <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
         @click="nextVideoUrl()"></UButton>
+      <div class="grow"></div>
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
-      <UTextarea ref="chatInput" @keydown.ctrl.enter="handleSubmit" :ui="{ base: 'resize-none' }"
+      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="handleSubmit" :ui="{ base: 'resize-none' }"
         class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input">
       </UTextarea>
       <UButton size="xl" type="submit">Submit</UButton>
@@ -190,6 +192,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       </UButton>
       <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch>
       <UButton @click="speak">Speak</UButton>
+      <div class="grow"></div>
     </form>
   </div>
 </template>
