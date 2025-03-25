@@ -82,6 +82,10 @@ watch(result, () => {
 //   }
 // })
 
+import type { CardProps } from '@nuxt/ui';
+const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }
+
+
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
 watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
@@ -96,13 +100,13 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 <template>
 
   <div class="">
-    <!-- <div class="bg-amber-800 w-screen h-screen absolute">
-      <video loop="true" muted autoplay class="w-full h-full object-cover">
+    <!-- <div class="absolute w-screen h-screen bg-amber-800">
+      <video loop="true" muted autoplay class="object-cover w-full h-full">
         <source :src="videoUrl" type="video/mp4">
       </video>
     </div> -->
-    <div class="fixed top-0 left-0 p-3 max-w-72 flex flex-col gap-4">
-      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+    <div class="fixed top-0 left-0 flex flex-col gap-4 p-3 max-w-72">
+      <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Recognition status</template>
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>Listening: </p>
@@ -115,7 +119,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
           <p>{{ result }}</p>
         </div>
       </UCard>
-      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+      <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Synthesis status</template>
 
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
@@ -127,7 +131,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
           <p>{{ speechStatus }}</p>
         </div>
       </UCard>
-      <UCard :ui="{ body: 'p-3 sm:p-3', header: 'p-3 sm:p-3' }" class="" variant="subtle">
+      <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Chat status</template>
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>status: </p>
@@ -135,15 +139,15 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </div>
       </UCard>
     </div>
-    <div ref="messageContainer" class="mx-auto mb-12 p-6 max-w-2xl flex flex-col gap-4 w-full">
+    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-12">
       <template v-for="message in parsedMessages" :key="message.id">
-        <div class="rounded-md p-4 border backdrop-blur-md"
+        <div class="p-4 border rounded-md backdrop-blur-md"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']"
           v-html="message.parsedContent">
         </div>
       </template>
     </div>
-    <form class="fixed backdrop-blur-md w-full justify-center bottom-0 p-4 flex items-end gap-2"
+    <form class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-md"
       @submit.prevent="handleSubmit">
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
