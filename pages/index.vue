@@ -2,18 +2,12 @@
 import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
 
-import video1 from '~/public/videos/189639-886016299_small.mp4';
-import video2 from '~/public/videos/160767-822213540_tiny.mp4';
-import video3 from '~/public/videos/29561-375947285_small.mp4';
-import video4 from '~/public/videos/29575-375947265_small.mp4';
-import video5 from '~/public/videos/71122-537102350_small.mp4';
-
 const videoUrls = shallowRef([
+  '/videos/71122-537102350_small.mp4',
   '/videos/189639-886016299_small.mp4',
   '/videos/160767-822213540_tiny.mp4',
   '/videos/29561-375947285_small.mp4',
   '/videos/29575-375947265_small.mp4',
-  '/videos/71122-537102350_small.mp4',
 ]);
 const { state: currentVideoUrl, next: nextVideoUrl } = useCycleList(videoUrls)
 
@@ -22,11 +16,6 @@ onMounted(() => {
   if (isDefined(bgVideoRef)) {
     bgVideoRef.value.loop = true;
     bgVideoRef.value.playbackRate = 0.7;
-    // bgVideoRef.value.addEventListener('ended', () => {
-    //   console.log('video ended');
-    //   bgVideoRef.value.playbackRate = -1;
-    //   bgVideoRef.value.play();
-    // })
   }
 })
 
@@ -38,32 +27,46 @@ onStartTyping(() => {
   }
 })
 
-// import bgUrl from '~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg';
-// const { stream, start, stop } = useUserMedia({
-//   constraints: {
-//     audio: true,
-//   }
-// })
-// const voices = window.speechSynthesis?.getVoices();
-// console.log(voices);
-const { isListening, start, stop, result, isFinal, error, recognition } = useSpeechRecognition({
+const { isListening, start: startListening, stop: stopListening, result: ListeningResult, isFinal: ListeningResultIsFinal, error: ListeningError, recognition } = useSpeechRecognition({
   lang: 'sv-SE',
   interimResults: true,
   continuous: true,
 })
+const listenModes: ('listen' | 'listenAndSend' | 'inactive')[] = ['listen', 'listenAndSend', 'inactive'];
+const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes);
+watch(currentListenMode, (newListenMode) => {
+  switch (newListenMode) {
+    case 'listen':
+      startListening();
+      break;
+    case 'listenAndSend':
+      break;
+    case 'inactive':
+      stopListening();
+      break;
+  }
+});
+const currentListenModeIcon = computed(() => {
+  switch (currentListenMode.value) {
+    case 'listen':
+      return 'i-material-symbols-mic';
+    case 'listenAndSend':
+      return 'i-material-symbols-auto-detect-voice';
+    case 'inactive':
+      return 'i-material-symbols-mic-off';
+  }
+})
 
 const currentSpeechSynthText = ref('Tjenare');
-
-const { utterance, speak, status: speechStatus, isPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesis(currentSpeechSynthText, {
+const { utterance, speak, status: speechStatus, isPlaying: speechIsPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesis(currentSpeechSynthText, {
   lang: 'sv-SE',
   pitch: 8,
-  rate: 1.4,
+  rate: 3,
 });
+const autoSpeak = ref(false);
+const toggleAutoSpeak = useToggle(autoSpeak);
 
-
-const autoSendSpeech = ref(true);
-
-const { messages, input, handleSubmit, status: chatStatus, } = useChat()
+const { messages, input, handleSubmit, status: chatStatus, data: chatData } = useChat()
 const parsedMessages = computed(() => {
   return messages.value.map((message) => {
     return {
@@ -78,22 +81,61 @@ const parsedMessages = computed(() => {
 watch(chatStatus, () => {
   if (chatStatus.value === 'ready' && messages.value.length !== 0) {
     currentSpeechSynthText.value = messages.value[messages.value.length - 1].content;
-    console.log('chatStatus ready!', currentSpeechSynthText.value);
-    speak();
+    // console.log('chatStatus ready!', currentSpeechSynthText.value);
+    // speak();
   }
 });
 
-watch(isFinal, () => {
-  if (isFinal.value) {
-    if (autoSendSpeech.value) {
+watch(chatData, () => {
+  console.log('data updated:', chatData.value);
+})
+
+
+const speechQueue = ref<string[]>([]);
+
+const wordWriter = sentenceTransformer.writable.getWriter();
+const sentenceReader = sentenceTransformer.readable.getReader();
+
+// const segmenter = new Intl.Segmenter(['sv', 'en'], { granularity: 'sentence' });
+// const strArr = Array.from(segmenter.segment('Hello! Whats your name? My name is Bob!'));
+
+
+watch(() => messages.value.at(-1), async (lastMessageNewValue, lastMessagePrevValue) => {
+  if (!isDefined(lastMessageNewValue) || !isDefined(lastMessagePrevValue)) return;
+  if (lastMessageNewValue.role !== 'assistant') return;
+  console.log('assistant message updated. new:', lastMessageNewValue.content, ' prev:', lastMessagePrevValue.content);
+  if (lastMessageNewValue.id === lastMessagePrevValue.id) {
+    const addedChars = lastMessageNewValue.content.substring(lastMessagePrevValue.content.length);
+    console.log(addedChars);
+    wordWriter.write(addedChars);
+
+    // Add to sentence
+    // const lastSentence = speechQueue.value.at(-1); 
+    // speechQueue.value.at(-1) += addedChars;
+  } else {
+    //Start new sentence
+    wordWriter.write(lastMessageNewValue.content);
+    // speechQueue.value.push(lastMessageNewValue.content);
+  }
+  const { value: sentence, done } = await sentenceReader.read();
+  if (done) return;
+  speechQueue.value.push(sentence)
+
+  // console.log(newMessages[newMessages.length - 1].parts);
+  // console.log(prevMessages[newMessages.length - 1].parts);
+})
+
+watch(ListeningResultIsFinal, () => {
+  if (ListeningResultIsFinal.value) {
+    if (currentListenMode.value === 'listenAndSend') {
       handleSubmit();
     }
   }
 })
 
-watch(result, () => {
+watch(ListeningResult, () => {
   if (isListening.value) {
-    input.value = result.value;
+    input.value = ListeningResult.value;
   }
 })
 // const img = useImage();
@@ -108,13 +150,14 @@ watch(result, () => {
 // })
 
 import type { CardProps } from '@nuxt/ui';
+import sentenceTransformer from '~/utils/sentenceStreamer';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
 
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
 watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
-  console.log(messageContainer.value?.lastElementChild?.lastElementChild);
+  // console.log(messageContainer.value?.lastElementChild?.lastElementChild);
   messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
     behavior: 'smooth',
   });
@@ -131,18 +174,20 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         <!-- <source :src="currentVideoUrl" type="video/mp4"> -->
       </video>
     </div>
-    <div class="fixed top-0 left-0 flex flex-col gap-4 p-3 max-w-64">
+    <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
       <UCard :ui="cardUISettings" class="" variant="subtle">
         <template #header>Recognition status</template>
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>Listening: </p>
           <p>{{ isListening }}</p>
           <p>Final: </p>
-          <p>{{ isFinal }}</p>
+          <p>{{ ListeningResultIsFinal }}</p>
           <p>Error: </p>
-          <p>{{ error }}</p>
+          <p>{{ ListeningError?.message }}</p>
           <p>Result: </p>
-          <p>{{ result }}</p>
+          <p>{{ ListeningResult }}</p>
+          <p>ListenMode: </p>
+          <p>{{ currentListenMode }}</p>
         </div>
       </UCard>
       <UCard :ui="cardUISettings" class="" variant="subtle">
@@ -150,19 +195,23 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>Playing: </p>
-          <p>{{ isPlaying }}</p>
+          <p>{{ speechIsPlaying }}</p>
           <p>Error: </p>
-          <p>{{ speechError }}</p>
+          <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p>
           <p>Status: </p>
           <p>{{ speechStatus }}</p>
         </div>
       </UCard>
-      <UCard :ui="cardUISettings" class="" variant="subtle">
+      <UCard :ui="cardUISettings" class="max-h-80 overflow-y-scroll" variant="subtle">
         <template #header>Chat status</template>
         <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
           <p>status: </p>
           <p>{{ chatStatus }}</p>
-          <p>{{ currentVideoUrl }}</p>
+          <!-- <p>data: </p>
+          <p>{{ chatData }}</p> -->
+          <p>speechqueue: </p>
+          <p>{{ speechQueue }}</p>
+          <!-- <p>{{ currentVideoUrl }}</p> -->
         </div>
       </UCard>
     </div>
@@ -186,12 +235,16 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="handleSubmit" :ui="{ base: 'resize-none' }"
         class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input">
       </UTextarea>
-      <UButton size="xl" type="submit">Submit</UButton>
-      <UButton size="xl" :icon="isListening ? 'i-lucide-mic-off' : 'i-lucide-mic'"
-        @click="isListening ? stop() : start()">
-      </UButton>
-      <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch>
-      <UButton @click="speak">Speak</UButton>
+      <UButton size="xl" type="submit" icon="i-lucide-send"></UButton>
+      <!-- <UButton size="xl" :variant="isListening ? 'solid' : 'soft'" :color="isListening ? 'primary' : 'warning'"
+        :icon="isListening ? 'material-symbols-auto-detect-voice' : 'i-material-symbols-mic-off'"
+        @click="isListening ? stopListening() : startListening()">
+      </UButton> -->
+      <UButton class="rounded-full" size="xl" :icon="currentListenModeIcon" @click="nextListenMode()"></UButton>
+      <!-- <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch> -->
+      <!-- <UButton @click="speak()">Speak</UButton> -->
+      <UButton v-if="speechIsPlaying" size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off"
+        @click="stopSpeech()"></UButton>
       <div class="grow"></div>
     </form>
   </div>
