@@ -1,5 +1,9 @@
 export const markdownString = `Here are a few examples of Markdown:
 
+This is a normal paragraph. Several sentences are following each other. Cool, right?!
+This is a new line after a punctuation mark
+This is a new line after a missing punctuation mark
+
 ### Heading
 This is a level 1 heading.
 
@@ -36,6 +40,10 @@ Let me know if you have any specific requests or need help with anything else!`;
 
 export const expectedSentences = [
   "Here are a few examples of Markdown:",
+  "This is a normal paragraph.",
+  "Several sentences are following each other.", "Cool, right?!",
+  "This is a new line after a punctuation mark",
+  "This is a new line after a missing punctuation mark",
   "Heading",
   "This is a level 1 heading.",
   "Subheading",
