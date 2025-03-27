@@ -93,6 +93,7 @@ watch(chatData, () => {
 
 const speechQueue = ref<string[]>([]);
 
+const sentenceTransformer = sentenceStreamer();
 const wordWriter = sentenceTransformer.writable.getWriter();
 const sentenceReader = sentenceTransformer.readable.getReader();
 
@@ -150,7 +151,6 @@ watch(ListeningResult, () => {
 // })
 
 import type { CardProps } from '@nuxt/ui';
-import sentenceTransformer from '~/utils/sentenceStreamer';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
 
 
@@ -217,9 +217,9 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     </div>
     <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-16">
       <template v-for="message in parsedMessages" :key="message.id">
-        <div class="p-4 border rounded-md backdrop-blur-md"
+        <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <pre>
+          <pre class="whitespace-pre-wrap">
             {{ message.content }}
           </pre>
         </div>
