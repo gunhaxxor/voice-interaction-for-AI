@@ -2,6 +2,7 @@
 import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
 
+
 const videoUrls = shallowRef([
   '/videos/71122-537102350_small.mp4',
   '/videos/189639-886016299_small.mp4',
@@ -171,6 +172,7 @@ watch(ListeningResult, () => {
 
 import type { CardProps } from '@nuxt/ui';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
+const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(--ui-border) gap-x-2 *:even:font-bold *:odd:text-sm'
 
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
@@ -195,45 +197,63 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     </div>
     <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
       <UCard :ui="cardUISettings" class="" variant="subtle">
-        <template #header>Recognition status</template>
-        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
-          <p>Listening: </p>
-          <p>{{ isListening }}</p>
-          <p>Final: </p>
-          <p>{{ ListeningResultIsFinal }}</p>
-          <p>Error: </p>
-          <p>{{ ListeningError?.message }}</p>
-          <p>Result: </p>
-          <p>{{ ListeningResult }}</p>
-          <p>ListenMode: </p>
-          <p>{{ currentListenMode }}</p>
-        </div>
+        <UCollapsible class="">
+          <div class="">Listening status</div>
+          <template #content>
+
+            <div :class="debugPanelClasses">
+              <p>Listening: </p>
+              <p>{{ isListening }}</p>
+              <p>Final: </p>
+              <p>{{ ListeningResultIsFinal }}</p>
+              <p>Error: </p>
+              <p>{{ ListeningError?.message }}</p>
+              <p>Result: </p>
+              <p>{{ ListeningResult }}</p>
+              <p>ListenMode: </p>
+              <p>{{ currentListenMode }}</p>
+            </div>
+          </template>
+        </UCollapsible>
       </UCard>
       <UCard :ui="cardUISettings" class="" variant="subtle">
-        <template #header>Synthesis status</template>
+        <UCollapsible class="" default-open>
+          <div>Synthesis status</div>
 
-        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
-          <p>Playing: </p>
-          <p>{{ speechIsPlaying }}</p>
-          <p>Error: </p>
-          <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p>
-          <p>Status: </p>
-          <p>{{ speechStatus }}</p>
-          <p>Current Text: </p>
-          <p>{{ currentSpeechSynthText }}</p>
-        </div>
+          <template #content>
+
+            <div :class="debugPanelClasses">
+              <p>Playing: </p>
+              <p>{{ speechIsPlaying }}</p>
+              <p>Error: </p>
+              <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p>
+              <p>Status: </p>
+              <p>{{ speechStatus }}</p>
+              <p>Utterance: </p>
+              <p>{{ utterance.text }}</p>
+              <p>Current Text: </p>
+              <p>{{ currentSpeechSynthText }}</p>
+            </div>
+          </template>
+        </UCollapsible>
       </UCard>
       <UCard :ui="cardUISettings" class="max-h-80 overflow-y-scroll" variant="subtle">
-        <template #header>Chat status</template>
-        <div class="grid grid-cols-2 items-center gap-x-2 *:even:font-bold *:odd:text-sm">
-          <p>status: </p>
-          <p>{{ chatStatus }}</p>
-          <!-- <p>data: </p>
+        <UCollapsible>
+
+          <div>Chat status</div>
+          <template #content>
+
+            <div :class="debugPanelClasses">
+              <p>status: </p>
+              <p>{{ chatStatus }}</p>
+              <!-- <p>data: </p>
           <p>{{ chatData }}</p> -->
-          <p>speechqueue: </p>
-          <p>{{ speechQueue }}</p>
-          <!-- <p>{{ currentVideoUrl }}</p> -->
-        </div>
+              <p>speechqueue: </p>
+              <p>{{ speechQueue }}</p>
+              <!-- <p>{{ currentVideoUrl }}</p> -->
+            </div>
+          </template>
+        </UCollapsible>
       </UCard>
     </div>
     <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-16">
