@@ -27,7 +27,7 @@ export default defineLazyEventHandler(async () => {
     const { messages } = await readBody(event);
     // console.log('received messages:', messages);
     const result = streamText({
-      model: openai('llama3.2'),
+      model: openai('deepseek-r1'),
       messages,
     })
     return result.toDataStreamResponse();
