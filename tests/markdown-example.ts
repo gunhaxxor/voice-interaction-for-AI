@@ -50,10 +50,11 @@ export const expectedSentences = [
   "Strikethrough text",
   "This text will be struck through.",
   "Code block",
+  "python",
   'print("Hello World!")',
   "Link",
-  "Visit Google",
+  "[Visit Google](https://www.google.com)",
   "Image",
-  "Google Logo",
+  "![Google Logo](https://www.google.com/logo.png)",
   "Let me know if you have any specific requests or need help with anything else!"
 ]
