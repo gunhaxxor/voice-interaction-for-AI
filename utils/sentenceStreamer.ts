@@ -56,6 +56,4 @@ class SentenceTransformer implements Transformer<string, string> {
   }
 }
 
-const sentenceTransformer = new TransformStream<string, string>(new SentenceTransformer());
-
-export default sentenceTransformer;
+export default function createSentenceTransformer() { return new TransformStream<string, string>(new SentenceTransformer()); }
