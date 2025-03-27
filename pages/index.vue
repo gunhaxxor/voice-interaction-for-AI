@@ -9,14 +9,20 @@ const videoUrls = shallowRef([
   '/videos/29561-375947285_small.mp4',
   '/videos/29575-375947265_small.mp4',
 ]);
-const { state: currentVideoUrl, next: nextVideoUrl } = useCycleList(videoUrls)
+const { state: currentVideoUrl, next: nextVideoUrl, go: setVideoIndex } = useCycleList(videoUrls, {
+  initialValue: videoUrls.value[Math.floor(Math.random() * videoUrls.value.length)],
+})
 
 const bgVideoRef = templateRef('backgroundVideo');
 onMounted(() => {
+  // setVideoIndex(Math.floor(Math.random() * videoUrls.value.length));
   if (isDefined(bgVideoRef)) {
     bgVideoRef.value.loop = true;
     bgVideoRef.value.playbackRate = 0.7;
   }
+
+
+
 })
 
 // @ts-expect-error
@@ -99,15 +105,30 @@ const sentenceReader = sentenceTransformer.readable.getReader();
 
 // const segmenter = new Intl.Segmenter(['sv', 'en'], { granularity: 'sentence' });
 // const strArr = Array.from(segmenter.segment('Hello! Whats your name? My name is Bob!'));
+onMounted(() => {
+  readNextSentencesLoop();
+})
 
+async function readNextSentencesLoop() {
+  while (true) {
+    console.log('gonna read next sentence');
+    // code execution pauses here until data available or stream closed (or error)
+    const { value: sentence, done } = await sentenceReader.read();
+    console.log('read next sentence resolved', sentence, done);
+    if (done) break;
+    // speechQueue.value.push(sentence)
+    currentSpeechSynthText.value = sentence;
+    speak();
+  }
+}
 
-watch(() => messages.value.at(-1), async (lastMessageNewValue, lastMessagePrevValue) => {
+watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) => {
   if (!isDefined(lastMessageNewValue) || !isDefined(lastMessagePrevValue)) return;
   if (lastMessageNewValue.role !== 'assistant') return;
-  console.log('assistant message updated. new:', lastMessageNewValue.content, ' prev:', lastMessagePrevValue.content);
+  // console.log('assistant message updated. new:', lastMessageNewValue.content, ' prev:', lastMessagePrevValue.content);
   if (lastMessageNewValue.id === lastMessagePrevValue.id) {
     const addedChars = lastMessageNewValue.content.substring(lastMessagePrevValue.content.length);
-    console.log(addedChars);
+    // console.log(addedChars);
     wordWriter.write(addedChars);
 
     // Add to sentence
@@ -115,12 +136,10 @@ watch(() => messages.value.at(-1), async (lastMessageNewValue, lastMessagePrevVa
     // speechQueue.value.at(-1) += addedChars;
   } else {
     //Start new sentence
+    console.log('new sentence');
     wordWriter.write(lastMessageNewValue.content);
     // speechQueue.value.push(lastMessageNewValue.content);
   }
-  const { value: sentence, done } = await sentenceReader.read();
-  if (done) return;
-  speechQueue.value.push(sentence)
 
   // console.log(newMessages[newMessages.length - 1].parts);
   // console.log(prevMessages[newMessages.length - 1].parts);
@@ -200,6 +219,8 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
           <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p>
           <p>Status: </p>
           <p>{{ speechStatus }}</p>
+          <p>Current Text: </p>
+          <p>{{ currentSpeechSynthText }}</p>
         </div>
       </UCard>
       <UCard :ui="cardUISettings" class="max-h-80 overflow-y-scroll" variant="subtle">
@@ -219,9 +240,10 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <pre class="whitespace-pre-wrap">
+          <div v-html="message.content"></div>
+          <!-- <pre class="whitespace-pre-wrap">
             {{ message.content }}
-          </pre>
+          </pre> -->
         </div>
       </template>
     </div>
