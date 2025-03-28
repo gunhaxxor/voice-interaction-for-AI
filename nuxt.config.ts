@@ -14,5 +14,6 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY
-  }
+  },
+  ssr: false,
 })
