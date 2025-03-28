@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
-
+import { useSpeechSynthesisCustom } from '~/composables/useSpeechSynthesis';
 
 const videoUrls = shallowRef([
   '/videos/71122-537102350_small.mp4',
@@ -21,9 +21,6 @@ onMounted(() => {
     bgVideoRef.value.loop = true;
     bgVideoRef.value.playbackRate = 0.7;
   }
-
-
-
 })
 
 // @ts-expect-error
@@ -40,7 +37,7 @@ const { isListening, start: startListening, stop: stopListening, result: Listeni
   continuous: true,
 })
 const listenModes: ('listen' | 'listenAndSend' | 'inactive')[] = ['listen', 'listenAndSend', 'inactive'];
-const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes);
+const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes, { initialValue: 'inactive' });
 watch(currentListenMode, (newListenMode) => {
   switch (newListenMode) {
     case 'listen':
@@ -65,10 +62,10 @@ const currentListenModeIcon = computed(() => {
 })
 
 const currentSpeechSynthText = ref('Tjenare');
-const { utterance, speak, status: speechStatus, isPlaying: speechIsPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesis(currentSpeechSynthText, {
+const { utterance, speak, resume, status: speechStatus, isPlaying: speechIsPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesisCustom(currentSpeechSynthText, {
   lang: 'sv-SE',
-  pitch: 8,
-  rate: 3,
+  pitch: 1,
+  rate: 1.5,
 });
 const autoSpeak = ref(false);
 const toggleAutoSpeak = useToggle(autoSpeak);
@@ -174,7 +171,6 @@ import type { CardProps } from '@nuxt/ui';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
 const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(--ui-border) gap-x-2 *:even:font-bold *:odd:text-sm'
 
-
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
 watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
@@ -260,7 +256,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <div v-html="message.content"></div>
+          <div v-html="message.parsedContent"></div>
           <!-- <pre class="whitespace-pre-wrap">
             {{ message.content }}
           </pre> -->
@@ -286,9 +282,9 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       </UButton> -->
       <UButton class="rounded-full" size="xl" :icon="currentListenModeIcon" @click="nextListenMode()"></UButton>
       <!-- <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch> -->
-      <!-- <UButton @click="speak()">Speak</UButton> -->
-      <UButton v-if="speechIsPlaying" size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off"
-        @click="stopSpeech()"></UButton>
+      <UButton @click="speak()">Speak</UButton>
+      <UButton @click="resume()">Resume</UButton>
+      <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="stopSpeech()"></UButton>
       <div class="grow"></div>
     </form>
   </div>
