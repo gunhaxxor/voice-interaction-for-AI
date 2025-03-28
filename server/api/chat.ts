@@ -27,7 +27,7 @@ export default defineLazyEventHandler(async () => {
     const { messages } = await readBody(event);
     // console.log('received messages:', messages);
     const result = streamText({
-      model: openai('gemma3'),
+      model: openai('llama3.2'),
       messages,
     })
     return result.toDataStreamResponse();
