@@ -220,33 +220,32 @@ watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) =
   // console.log(prevMessages[newMessages.length - 1].parts);
 })
 
+const resultDecided = ref('')
+
 watch(ListeningResultIsFinal, () => {
   if (ListeningResultIsFinal.value) {
+    resultDecided.value += ListeningResult.value
+    input.value = resultDecided.value
     if (currentListenMode.value === 'listenAndSend') {
-      handleSubmit();
+      submit();
     }
     if (currentButtonMode.value === 'pressStart') {
-      handleSubmit();
+      submit();
       currentListenMode.value = 'inactive'
     }
   }
 })
 
-watch(ListeningResult, () => {
-  if (isListening.value) {
-    input.value = ListeningResult.value;
-  }
-})
-// const img = useImage();
-// const imgUrl = '~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg';
-
-// const backgroundStyles = computed(() => {
-//   // const imgUrl = img('~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg');
-
-//   return {
-//     backgroundImage: `url(${bgUrl})`,
+// watch(ListeningResult, () => {
+//   if (isListening.value) {
+//     input.value = ListeningResult.value;
 //   }
 // })
+
+function submit() {
+  resultDecided.value = ''
+  handleSubmit()
+}
 
 import type { CardProps } from '@nuxt/ui';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }

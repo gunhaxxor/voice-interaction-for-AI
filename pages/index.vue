@@ -143,19 +143,33 @@ watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) =
   // console.log(prevMessages[newMessages.length - 1].parts);
 })
 
+const resultDecided = ref('')
+
 watch(ListeningResultIsFinal, () => {
   if (ListeningResultIsFinal.value) {
+    resultDecided.value += ListeningResult.value
+    input.value = resultDecided.value
     if (currentListenMode.value === 'listenAndSend') {
-      handleSubmit();
+      // handleSubmit();
+      submit()
     }
   }
 })
 
 watch(ListeningResult, () => {
   if (isListening.value) {
-    input.value = ListeningResult.value;
+    // input.value = ListeningResult.value;
+    if(!ListeningResultIsFinal.value){
+      input.value = resultDecided.value + ListeningResult.value
+    }
   }
 })
+
+function submit() {
+  resultDecided.value = ''
+  handleSubmit()
+}
+
 // const img = useImage();
 // const imgUrl = '~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg';
 
@@ -266,14 +280,14 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     </div>
     <form
       class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
-      @submit.prevent="handleSubmit">
+      @submit.prevent="submit">
       <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
         @click="nextVideoUrl()"></UButton>
       <div class="grow"></div>
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
-      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="handleSubmit" :ui="{ base: 'resize-none' }"
+      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="submit" :ui="{ base: 'resize-none' }"
         class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input">
       </UTextarea>
       <UButton size="xl" type="submit" icon="i-lucide-send"></UButton>
