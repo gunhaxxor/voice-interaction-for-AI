@@ -1,10 +1,6 @@
 <script setup>
 const colorMode = useColorMode()
 
-onMounted(() => {
-    colorMode.value = 'system'
-})
-
 const isDark = computed({
   get() {
     return colorMode.value === 'dark'
@@ -16,7 +12,7 @@ const isDark = computed({
 </script>
 
 <template>
-    <div class="absolute top-0 right-0" style="z-index: 100">
+    <div class="absolute top-0 right-0" style="z-index: 100;">
         <ClientOnly v-if="!colorMode?.forced">
             <UButton
             :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"
