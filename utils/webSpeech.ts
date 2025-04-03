@@ -68,6 +68,9 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.rate = options.rate ?? rate;
     utterance.voice = options.voice ?? voice;
     utterance.volume = options.volume ?? volume;
+    utterance.addEventListener('boundary', (evt) => {
+      console.log('boundary event', evt);
+    })
     synth.speak(utterance);
   }
   

@@ -1,8 +1,8 @@
 <template>
-  <div class="flex my-16 mx-auto w-xl" @submit.prevent="addSpeech()">
+  <form class="flex my-16 mx-auto w-xl" @submit.prevent="addSpeech">
     <UInput class="grow" v-model="text" />
-    <UButton type="submit" @click="addSpeech()">Add to speech queue</UButton>
-  </div>
+    <UButton type="submit">Add to speech queue</UButton>
+  </form>
 </template>
 
 <script lang="ts" setup>
