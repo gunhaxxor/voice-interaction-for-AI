@@ -267,7 +267,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </UCollapsible>
       </UCard>
     </div>
-    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-16">
+    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-24">
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
