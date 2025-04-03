@@ -270,10 +270,8 @@ const darkMode = computed(() => {
 <template>
 
   <div class="w-screen h-screen flex flex-col">
-
-    <div class="absolute top-0 right-0">
-      <ColorModeSwitch />
-    </div>
+    
+    <ColorModeSwitch />
     
     <div class="flex-grow flex flex-col items-center justify-center gap-3">
       <div class="flex flex-col items-center" style="color: red">

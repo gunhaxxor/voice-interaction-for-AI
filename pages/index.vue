@@ -184,7 +184,8 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
 <template>
 
-  <div class="">
+  <div class="w-screen h-screen flex flex-col">
+    <ColorModeSwitch />
     <div class="fixed w-screen h-screen">
       <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
         class="object-cover w-full h-full brightness-50 ">
