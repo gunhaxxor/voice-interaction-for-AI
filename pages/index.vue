@@ -143,12 +143,12 @@ watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) =
   // console.log(prevMessages[newMessages.length - 1].parts);
 })
 
-const resultDecided = ref('')
+const resultsAppended = ref('')
 
 watch(ListeningResultIsFinal, () => {
   if (ListeningResultIsFinal.value) {
-    resultDecided.value += ListeningResult.value
-    input.value = resultDecided.value
+    resultsAppended.value += ListeningResult.value
+    input.value = resultsAppended.value
     if (currentListenMode.value === 'listenAndSend') {
       // handleSubmit();
       submit()
@@ -160,13 +160,13 @@ watch(ListeningResult, () => {
   if (isListening.value) {
     // input.value = ListeningResult.value;
     if(!ListeningResultIsFinal.value){
-      input.value = resultDecided.value + ListeningResult.value
+      input.value = resultsAppended.value + ListeningResult.value
     }
   }
 })
 
 function submit() {
-  resultDecided.value = ''
+  resultsAppended.value = ''
   handleSubmit()
 }
 
