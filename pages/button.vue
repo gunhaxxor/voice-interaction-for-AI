@@ -3,31 +3,10 @@ import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
 import { useSpeechSynthesisCustom } from '~/composables/useSpeechSynthesis';
 
-
-const videoUrls = shallowRef([
-  '/videos/71122-537102350_small.mp4',
-  '/videos/189639-886016299_small.mp4',
-  '/videos/160767-822213540_tiny.mp4',
-  '/videos/29561-375947285_small.mp4',
-  '/videos/29575-375947265_small.mp4',
-]);
-const { state: currentVideoUrl, next: nextVideoUrl, go: setVideoIndex } = useCycleList(videoUrls, {
-  initialValue: videoUrls.value[Math.floor(Math.random() * videoUrls.value.length)],
-})
-
-const bgVideoRef = templateRef('backgroundVideo');
-onMounted(() => {
-  // setVideoIndex(Math.floor(Math.random() * videoUrls.value.length));
-  if (isDefined(bgVideoRef)) {
-    bgVideoRef.value.loop = true;
-    bgVideoRef.value.playbackRate = 0.7;
-  }
-})
-
 // Button stuff
-
-type ButtonMode = 'hold' | 'pressStart' | 'pressStartStop'
+type ButtonMode = 'hold' | 'pressToStart' | 'pressToStartStop'
 const currentButtonMode = ref('hold' as ButtonMode)
+const readyToSubmit = ref(false)
 
 onMounted(() => {
   window.addEventListener('keydown', onButtonDown)
@@ -44,20 +23,22 @@ function onButtonDown(e: KeyboardEvent) {
     switch (currentButtonMode.value) {
       case 'hold':
         console.log('Start listening')
-        currentListenMode.value = 'listen'
+        readyToSubmit.value = false
+        startListening();
         break
-      case 'pressStart':
+      case 'pressToStart':
         console.log('Start listening')
-        currentListenMode.value = 'listen'
+        readyToSubmit.value = false
+        startListening();
         break
-      case 'pressStartStop':
+      case 'pressToStartStop':
         if(!isListening.value) {
           console.log('Start listening')
-          currentListenMode.value = 'listenAndSend'
+          startListening();
         }
         else {
           console.log('Stop listening')
-          currentListenMode.value = 'inactive'
+          stopListening()
         }
         break
     }
@@ -69,12 +50,12 @@ function onButtonUp(e: KeyboardEvent) {
     switch (currentButtonMode.value) {
       case 'hold':
         console.log('Stop listening')
-        handleSubmit()
-        currentListenMode.value = 'inactive'
+        readyToSubmit.value = true
+        stopListening()
         break
-      case 'pressStart':
+      case 'pressToStart':
         break
-      case 'pressStartStop':
+      case 'pressToStartStop':
         break
     }
     
@@ -88,54 +69,21 @@ const buttonListItems = ref([
     description: 'Hold > speak > release.'
   },
   {
-    value: 'pressStart',
+    value: 'pressToStart',
     label: 'Press, single sentence',
     description: 'Press > speak a single sentence'
   },
   {
-    value: 'pressStartStop',
+    value: 'pressToStartStop',
     label: 'Press, continuous ',
     description: 'Press > speak > press again to stop'
   }
 ])
 
-// @ts-expect-error
-const chatComponent = templateRef('chatInput');
-onStartTyping(() => {
-  if (document.activeElement !== chatComponent.value?.textareaRef) {
-    chatComponent.value?.textareaRef?.focus();
-  }
-})
-
 const { isListening, start: startListening, stop: stopListening, result: ListeningResult, isFinal: ListeningResultIsFinal, error: ListeningError, recognition } = useSpeechRecognition({
   lang: 'sv-SE',
   interimResults: true,
   continuous: true,
-})
-const listenModes: ('listen' | 'listenAndSend' | 'inactive')[] = ['listen', 'listenAndSend', 'inactive'];
-const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes, { initialValue: 'inactive' });
-watch(currentListenMode, (newListenMode) => {
-  switch (newListenMode) {
-    case 'listen':
-      startListening();
-      break;
-    case 'listenAndSend':
-      startListening();
-      break;
-    case 'inactive':
-      stopListening();
-      break;
-  }
-});
-const currentListenModeIcon = computed(() => {
-  switch (currentListenMode.value) {
-    case 'listen':
-      return 'i-material-symbols-mic';
-    case 'listenAndSend':
-      return 'i-material-symbols-auto-detect-voice';
-    case 'inactive':
-      return 'i-material-symbols-mic-off';
-  }
 })
 
 const currentSpeechSynthText = ref('Tjenare');
@@ -144,8 +92,6 @@ const { utterance, speak, resume, status: speechStatus, isPlaying: speechIsPlayi
   pitch: 1,
   rate: 1.5,
 });
-const autoSpeak = ref(false);
-const toggleAutoSpeak = useToggle(autoSpeak);
 
 const { messages, input, handleSubmit, status: chatStatus, data: chatData } = useChat()
 const parsedMessages = computed(() => {
@@ -162,17 +108,12 @@ const parsedMessages = computed(() => {
 watch(chatStatus, () => {
   if (chatStatus.value === 'ready' && messages.value.length !== 0) {
     currentSpeechSynthText.value = messages.value[messages.value.length - 1].content;
-    // console.log('chatStatus ready!', currentSpeechSynthText.value);
-    // speak();
   }
 });
 
 watch(chatData, () => {
   console.log('data updated:', chatData.value);
 })
-
-
-const speechQueue = ref<string[]>([]);
 
 const sentenceTransformer = sentenceStreamer();
 const wordWriter = sentenceTransformer.writable.getWriter();
@@ -226,17 +167,28 @@ watch(ListeningResultIsFinal, () => {
   if (ListeningResultIsFinal.value) {
     resultsAppended.value += ListeningResult.value
     input.value = resultsAppended.value
-    if (currentListenMode.value === 'listenAndSend') {
-      submit();
+
+    switch (currentButtonMode.value) {
+      case 'hold':
+        break
+      case 'pressToStart':
+        readyToSubmit.value = true
+        stopListening();
+        break
+      case 'pressToStartStop':
+        readyToSubmit.value = true
+        break
     }
-    if (currentButtonMode.value === 'pressStart') {
-      submit();
-      currentListenMode.value = 'inactive'
+
+    if(readyToSubmit.value) {
+      submit()
     }
+    
   }
 })
 
 function submit() {
+  console.log("Submit result:", input.value)
   resultsAppended.value = ''
   handleSubmit()
 }
