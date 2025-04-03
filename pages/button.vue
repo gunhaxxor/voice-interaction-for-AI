@@ -261,42 +261,38 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
   });
 })
 
+const darkMode = computed(() => {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+})
+
 </script>
 
 <template>
 
-  <div class="">
-    <div class="fixed w-screen h-screen bg-black">
-      <!-- <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
-        class="object-cover w-full h-full brightness-50 ">
-      </video> -->
+  <div class="w-screen h-screen flex flex-col">
+
+    <div class="absolute top-0 right-0">
+      <ColorModeSwitch />
     </div>
     
-    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-16">
-      <template v-for="message in parsedMessages" :key="message.id">
-        <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
-          :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <div v-html="message.parsedContent"></div>
-          <!-- <pre class="whitespace-pre-wrap">
-            {{ message.content }}
-          </pre> -->
-        </div>
-      </template>
-      <!-- Current input -->
-      <div v-if="isListening" class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45 self-end border-amber-400 ml-10">
-        <span style="color: red">Recording</span>
-        <div v-html="input"></div>
+    <div class="flex-grow flex flex-col items-center justify-center gap-3">
+      <div class="flex flex-col items-center" style="color: red">
+        <UIcon :name="isListening ? 'i-material-symbols-mic' : 'i-material-symbols-mic-off'" class="size-10" color="red"/>
+        <p>{{  isListening ? 'Listening' : 'Not listening' }}</p>
       </div>
-      
+      <p>
+        Note: this demo uses a screen. However, the intended use case is to demonstrate a scenario where no screen is present.
+      </p>
     </div>
-    <form
-      class="fixed bottom-0 flex items-center justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
+    
+    <div
+      class="flex items-center justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
       @submit.prevent="handleSubmit">
-      Spacebar / physical button:
+      Space bar / physical button:
       <div>
         <URadioGroup v-model="currentButtonMode" color="primary" orientation="horizontal" variant="card" :items="buttonListItems" />
       </div>
-    </form>
+    </div>
   </div>
 </template>
 
