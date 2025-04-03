@@ -74,7 +74,28 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     synth.speak(utterance);
   }
   
+  function clearQueueAndSpeak(text: string, options: UtteranceOptions = {}) {
+    synth.cancel();
+    addSpeechToQueue(text, options);
+  }
+
+  function stopAllSpeach() {
+    synth.cancel();
+  }
+
+  function pause() {
+    synth.pause();
+  }
+
+  function resume() {
+    synth.resume();
+  }
+
   return {
-    addSpeechToQueue
+    addSpeechToQueue,
+    clearQueueAndSpeak,
+    stopAllSpeach,
+    pause,
+    resume,
   }
 }
