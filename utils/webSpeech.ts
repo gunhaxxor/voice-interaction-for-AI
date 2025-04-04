@@ -67,7 +67,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     voice = null,
     volume = 1 
   } = defaultUtteranceOptions;
-  const synth = window.speechSynthesis
+  const synth = window.speechSynthesis;
   const addSpeechToQueue = (text: string, options: UtteranceOptions = {}) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang ?? lang;
@@ -78,8 +78,9 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     if (utterance.voice && !utterance.voice.localService) {
       console.warn('Remote voices seem to be buggy in Chrome (ium?)');
     }
+    let onstartBugFlag = false;
     utterance.onstart = () => {
-      // const startedUtterance = utteranceQueue.shift();
+      onstartBugFlag = false;
       setCurrentUtteranceFromQueue()
       if (utterance !== currentUtterance) {
         throw new Error('currentUtterance is not the same as utterance. There is a bug');
@@ -92,6 +93,12 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     }
     addToQueue(utterance);
     synth.speak(utterance);
+    onstartBugFlag = true;
+    setTimeout(() => {
+      // console.log('after calling speak');
+      // console.log('synth.speaking', synth.speaking);
+      console.log('onstartBugFlag', onstartBugFlag);
+    }, 200);
   }
   
   function clearQueueAndSpeak(text: string, options: UtteranceOptions = {}) {

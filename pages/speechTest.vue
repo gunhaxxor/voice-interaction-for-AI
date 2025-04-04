@@ -123,6 +123,10 @@ const presetSpeechs = [
     lang: 'en-US'
   },
   {
+    text: 'Hejsan! Jag heter Bengt. Microsoft Bengt!',
+    lang: 'sv-SE'
+  },
+  {
     text: 'Tror du på tomten?',
     lang: 'se-SV'
   },
