@@ -75,6 +75,9 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.rate = options.rate ?? rate;
     utterance.voice = options.voice ?? voice;
     utterance.volume = options.volume ?? volume;
+    if (utterance.voice && !utterance.voice.localService) {
+      console.warn('Remote voices seem to be buggy in Chrome (ium?)');
+    }
     utterance.onstart = () => {
       // const startedUtterance = utteranceQueue.shift();
       setCurrentUtteranceFromQueue()
@@ -88,13 +91,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
       utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance ended');
     }
     addToQueue(utterance);
-    // utterance.addEventListener('boundary', (evt) => {
-    //   console.log('boundary event', evt);
-    // })
     synth.speak(utterance);
-    if (utterance.voice && !utterance.voice.localService) {
-      console.warn('Remote voices seem to be buggy in Chrome (ium?)');
-    }
   }
   
   function clearQueueAndSpeak(text: string, options: UtteranceOptions = {}) {

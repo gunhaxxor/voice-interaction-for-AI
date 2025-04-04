@@ -1,9 +1,9 @@
 <template>
   <div class="my-16 mx-auto w-2xl flex flex-col gap-6">
 
-    <form class="" @submit.prevent="addSpeechWithVoice">
-      <UInput class="grow" v-model="text" />
-      <UButton type="submit">Add to speech queue</UButton>
+    <form class="flex flex-wrap gap-3" @submit.prevent="addSpeechWithVoice">
+      <UInput class="flex-6/12" v-model="text" />
+      <UButton class="flex-2/12" type="submit">Add to speech queue</UButton>
       <!-- <USelect :items="['se-SV', 'en-GB', 'nl-NL']" v-model="lang" /> -->
       <USelect :ui="{ content: 'w-96' }" :content="{ align: 'end' }" class="w-72" :items="availableVoices"
         v-model="chosenVoiceURI" label-key="name" value-key="voiceURI">
