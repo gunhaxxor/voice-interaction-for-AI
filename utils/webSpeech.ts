@@ -36,16 +36,34 @@ export interface UtteranceOptions {
   volume?: SpeechSynthesisUtterance['volume']
 }
 
-export function getAvailableVoices() {
-  if(!isSpeechSynthesisSupported()){
-    console.warn('SpeechSynthesis is not supported on this device');
-    return;
-  }
+// export function getAvailableVoices() {
+//   if(!isSpeechSynthesisSupported()){
+//     console.warn('SpeechSynthesis is not supported on this device');
+//     return;
+//   }
 
-  return window.speechSynthesis.getVoices();
-}
+//   return window.speechSynthesis.getVoices();
+// }
+
+type QueueUpdatedHandler = (queue: SpeechSynthesisUtterance[], reason?: string) => void
 
 export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions = {}) {
+  let currentUtterance: SpeechSynthesisUtterance | undefined = undefined;
+  const utteranceQueue: SpeechSynthesisUtterance[] = [];
+  let queueUpdatedHandler: undefined | QueueUpdatedHandler = undefined;
+  function setQueueUpdatedListener(handler: QueueUpdatedHandler) {
+    queueUpdatedHandler = handler;
+  }
+  function addToQueue(utterance: SpeechSynthesisUtterance) {
+    utteranceQueue.push(utterance);
+    queueUpdatedHandler?.(utteranceQueue, 'added');
+  }
+  function shiftFromQueue() {
+    // utteranceQueue.splice(utteranceQueue.indexOf(utterance), 1);
+    const shiftedUtterance = utteranceQueue.shift();
+    queueUpdatedHandler?.(utteranceQueue, 'removed');
+    return shiftedUtterance;
+  }
   if(!isSpeechSynthesisSupported()){
     console.error('SpeechSynthesis is not supported on this device');
     throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
@@ -67,9 +85,18 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.rate = options.rate ?? rate;
     utterance.voice = options.voice ?? voice;
     utterance.volume = options.volume ?? volume;
-    utterance.addEventListener('boundary', (evt) => {
-      console.log('boundary event', evt);
-    })
+    utterance.onstart = () => {
+      // const startedUtterance = utteranceQueue.shift();
+      const currentUtterance = shiftFromQueue()
+      if (utterance !== currentUtterance) {
+        throw new Error('currentUtterance is not the same as utterance. There is a bug');
+      }
+      console.log('currentUtterance: ', currentUtterance);
+    }
+    addToQueue(utterance);
+    // utterance.addEventListener('boundary', (evt) => {
+    //   console.log('boundary event', evt);
+    // })
     synth.speak(utterance);
   }
   
@@ -90,12 +117,25 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     synth.resume();
   }
 
+  function getAvailableVoices() {
+    return synth.getVoices();
+  }
+
+  function setVoicesChangedListener(handler: (voices: SpeechSynthesisVoice[]) => void) {
+    synth.onvoiceschanged = () => {
+      handler(synth.getVoices());
+    }
+  }
+
   return {
     addSpeechToQueue,
     clearQueueAndSpeak,
     stopAllSpeech,
     pause,
     resume,
+    getAvailableVoices,
+    setVoicesChangedListener,
+    setQueueUpdatedListener,
     speechSynthesis: synth,
   }
 }
