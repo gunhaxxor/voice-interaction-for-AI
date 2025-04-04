@@ -55,7 +55,6 @@ function addSpeechWithVoice() {
   addSpeechToQueue(text.value, {
     voice: chosenVoice.value
   });
-  // addSpeechToQueue(text.value);
 }
 
 // const lang = ref<string>('se-SV');
@@ -63,17 +62,10 @@ const chosenVoiceURI = shallowRef<SpeechSynthesisVoice['voiceURI']>();
 const chosenVoice = computed<SpeechSynthesisVoice | undefined>(() => {
   const foundVoice = availableVoices.value.find(voice => voice.voiceURI === chosenVoiceURI.value);
   if (!foundVoice) {
-    // return availableVoices.value[0];
     return undefined;
   }
   return foundVoice;
 })
-
-
-// const voiceOptions = useArrayMap(availableVoices, (voice, idx, arr) => ({ voice, value: voice }))
-// const voiceSelectOption = computed(() => {
-//   return availableVoices.value.map
-// })
 
 const { addSpeechToQueue, stopAllSpeech, pause, resume, speechSynthesis } = initiatateSpeechSynth();
 const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
