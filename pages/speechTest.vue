@@ -69,10 +69,6 @@ const chosenVoice = computed<SpeechSynthesisVoice | undefined>(() => {
   return foundVoice;
 })
 
-const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
-useEventListener(window.speechSynthesis, 'voiceschanged', () => {
-  availableVoices.value = getAvailableVoices() ?? [];
-})
 
 // const voiceOptions = useArrayMap(availableVoices, (voice, idx, arr) => ({ voice, value: voice }))
 // const voiceSelectOption = computed(() => {
@@ -80,6 +76,10 @@ useEventListener(window.speechSynthesis, 'voiceschanged', () => {
 // })
 
 const { addSpeechToQueue, stopAllSpeech, pause, resume, speechSynthesis } = initiatateSpeechSynth();
+const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
+useEventListener(speechSynthesis, 'voiceschanged', () => {
+  availableVoices.value = getAvailableVoices() ?? [];
+})
   
 const text = ref('Hello. My name is Robert and I\'m a robot!!!');
 
