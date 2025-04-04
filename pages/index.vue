@@ -288,7 +288,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
       <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="submit" :ui="{ base: 'resize-none' }"
-        class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input">
+        class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input" @update:model-value="resultsAppended = input">
       </UTextarea>
       <UButton size="xl" type="submit" icon="i-lucide-send"></UButton>
       <!-- <UButton size="xl" :variant="isListening ? 'solid' : 'soft'" :color="isListening ? 'primary' : 'warning'"
