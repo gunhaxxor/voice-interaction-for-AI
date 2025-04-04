@@ -1,5 +1,3 @@
-import { options } from "marked";
-
 export function isSpeechSynthesisSupported() {
   if(!window) return false
   return 'speechSynthesis' in window;
@@ -36,17 +34,10 @@ export interface UtteranceOptions {
   volume?: SpeechSynthesisUtterance['volume']
 }
 
-// export function getAvailableVoices() {
-//   if(!isSpeechSynthesisSupported()){
-//     console.warn('SpeechSynthesis is not supported on this device');
-//     return;
-//   }
-
-//   return window.speechSynthesis.getVoices();
-// }
-
 type UtteranceQueueUpdatedHandler = (queue: SpeechSynthesisUtterance[], currentUtterance: SpeechSynthesisUtterance | undefined, reason?: string) => void
 
+// TODO: handle the bug in Chrome (ium?) where remote voices doesn't work wihtout calling synth.cancel
+// between utterances (I.E not possible to queue utterances).
 export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions = {}) {
   let currentUtterance: SpeechSynthesisUtterance | undefined = undefined;
   const utteranceQueue: SpeechSynthesisUtterance[] = [];
@@ -101,6 +92,9 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     //   console.log('boundary event', evt);
     // })
     synth.speak(utterance);
+    if (utterance.voice && !utterance.voice.localService) {
+      console.warn('Remote voices seem to be buggy in Chrome (ium?)');
+    }
   }
   
   function clearQueueAndSpeak(text: string, options: UtteranceOptions = {}) {
