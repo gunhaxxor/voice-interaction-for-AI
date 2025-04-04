@@ -21,11 +21,6 @@
       <UButton color="error" @click="stopAllSpeech()">Clear queue</UButton>
 
     </form>
-    <div>
-      <pre>{{ currentUtterance?.text }}</pre>
-      <USeparator />
-      <pre v-for="ut in speechQueue">{{ ut.text }}</pre>
-    </div>
     <UFormField size="xl" label="Presets" description="Add to speech queue">
 
       <UButtonGroup orientation="vertical">
@@ -49,6 +44,11 @@
           Mi gusta! Dolce VITA! It's a me, MARIO!</UButton> -->
       </UButtonGroup>
     </UFormField>
+    <div>
+      <pre>{{ currentUtterance?.text }}</pre>
+      <USeparator />
+      <pre v-for="ut in speechQueue">{{ ut.text }}</pre>
+    </div>
   </div>
 </template>
 
@@ -117,6 +117,14 @@ const presetSpeechs = [
   {
     text: 'I like big butts and I cannot lie!',
     lang: 'en-US'
+  },
+  {
+    text: 'Sometimes it rains.',
+    lang: 'en-US'
+  },
+  {
+    text: 'Tror du på tomten?',
+    lang: 'se-SV'
   },
   {
     text: 'Jij hebt mooie ogen',
