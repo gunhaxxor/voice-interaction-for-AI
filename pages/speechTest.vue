@@ -21,13 +21,17 @@
       <UButton color="error" @click="stopAllSpeech()">Clear queue</UButton>
 
     </form>
+    <div>
+      <pre>{{ currentUtterance?.text }}</pre>
+      <USeparator />
+      <pre v-for="ut in speechQueue">{{ ut.text }}</pre>
+    </div>
     <UFormField size="xl" label="Presets" description="Add to speech queue">
 
       <UButtonGroup orientation="vertical">
-        <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('Hurra för Sara!! Nu är hon äntligen vuxen!! Hipp hipp, Hurra hurra hurra!', { lang: 'se-SV' })">
-          Hurra för Sara!! Nu är hon äntligen vuxen!! Hipp hipp, Hurra hurra hurra!</UButton>
-        <UButton color="neutral" variant="outline" @click="addSpeechToQueue('Jag heter Gunnar', { lang: 'se-SV' })">Jag
+        <UButton v-for="speech in presetSpeechs" color="neutral" variant="outline"
+          @click="addSpeechToQueue(speech.text, speech)">{{ speech.text }}</UButton>
+        <!-- <UButton color="neutral" variant="outline" @click="addSpeechToQueue('Jag heter Gunnar', { lang: 'se-SV' })">Jag
           heter Gunnar</UButton>
         <UButton color="neutral" variant="outline"
           @click="addSpeechToQueue('Idag är det torsdag. Imorgon är det måndag. Konstigt va?', { lang: 'se-SV' })">
@@ -36,13 +40,13 @@
           @click="addSpeechToQueue('I like big butts and I can not lie!', { lang: 'en-GB' })">
           I like big butts and I can not lie!</UButton>
         <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('I like big butts and I can not lie!', { lang: 'en-US' })">
-          I like big butts and I can not lie!</UButton>
+          @click="addSpeechToQueue('I like big butts and I cannot lie!', { lang: 'en-US' })">
+          I like big butts and I cannot lie!</UButton>
         <UButton color="neutral" variant="outline" @click="addSpeechToQueue('Jij hebt mooie ogen', { lang: 'nl-NL' })">
           Jij hebt mooie ogen</UButton>
         <UButton color="neutral" variant="outline"
           @click="addSpeechToQueue('Mi gusta! Dolce VITA! It\'s a me, MARIO!', { lang: 'it-IT' })">
-          Mi gusta! Dolce VITA! It's a me, MARIO!</UButton>
+          Mi gusta! Dolce VITA! It's a me, MARIO!</UButton> -->
       </UButtonGroup>
     </UFormField>
   </div>
@@ -77,15 +81,52 @@ const {
   setQueueUpdatedListener,
   speechSynthesis,
 } = initiatateSpeechSynth();
+
 const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
 setVoicesChangedListener((voices) => {
   availableVoices.value = voices
 })
-setQueueUpdatedListener((newQueue) => {
-  console.log('Queue updated:', newQueue);
+
+const speechQueue = ref<SpeechSynthesisUtterance[]>([]);
+const currentUtterance = ref<SpeechSynthesisUtterance | undefined>();
+setQueueUpdatedListener((newQueue, newCurrentUtterance, reason) => {
+  console.log(`UtteranceQueue updated (${reason}):`, newCurrentUtterance?.text, newQueue);
+  speechQueue.value = [...newQueue];
+  currentUtterance.value = newCurrentUtterance;
 });
   
 const text = ref('Hello. My name is Robert and I\'m a robot!!!');
+
+const presetSpeechs = [
+  {
+    text: 'Hurra för Sara!! Nu är hon äntligen vuxen!! Hipp hipp, Hurra hurra hurra!',
+    lang: 'se-SV'
+  },
+  {
+    text: 'Jag heter Gunnar',
+    lang: 'se-SV'
+  },
+  {
+    text: 'Idag är det torsdag. Imorgon är det måndag. Konstigt va?',
+    lang: 'se-SV'
+  },
+  {
+    text: 'I like big butts and I can not lie!',
+    lang: 'en-GB'
+  },
+  {
+    text: 'I like big butts and I cannot lie!',
+    lang: 'en-US'
+  },
+  {
+    text: 'Jij hebt mooie ogen',
+    lang: 'nl-NL'
+  },
+  {
+    text: 'Mi gusta! Dolce VITA! It\'s a me, MARIO!',
+    lang: 'it-IT'
+  },
+]
 
 </script>
 
