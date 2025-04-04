@@ -35,7 +35,6 @@ export interface UtteranceOptions {
    */
   volume?: SpeechSynthesisUtterance['volume']
 }
-type definedUtteranceOptions = Required<Omit<UtteranceOptions, 'voice'>> & Pick<UtteranceOptions, 'voice'>
 
 export function getAvailableVoices() {
   if(!isSpeechSynthesisSupported()){
@@ -48,7 +47,7 @@ export function getAvailableVoices() {
 
 export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions = {}) {
   if(!isSpeechSynthesisSupported()){
-    console.warn('SpeechSynthesis is not supported on this device');
+    console.error('SpeechSynthesis is not supported on this device');
     throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
   }
   // const defaultUttOpts = defaultUtteranceOptions as (Required<Omit<UtteranceOptions, 'voice'>> & Pick<UtteranceOptions, 'voice'>);
@@ -79,7 +78,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     addSpeechToQueue(text, options);
   }
 
-  function stopAllSpeach() {
+  function stopAllSpeech() {
     synth.cancel();
   }
 
@@ -94,8 +93,9 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
   return {
     addSpeechToQueue,
     clearQueueAndSpeak,
-    stopAllSpeach,
+    stopAllSpeech,
     pause,
     resume,
+    speechSynthesis: synth,
   }
 }
