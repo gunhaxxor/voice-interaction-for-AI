@@ -4,17 +4,14 @@
     <form class="flex flex-wrap gap-3" @submit.prevent="addSpeechWithVoice">
       <UInput class="flex-6/12" v-model="text" />
       <UButton class="flex-2/12" type="submit">Add to speech queue</UButton>
-      <!-- <USelect :items="['se-SV', 'en-GB', 'nl-NL']" v-model="lang" /> -->
       <USelect :ui="{ content: 'w-96' }" :content="{ align: 'end' }" class="w-72" :items="availableVoices"
         v-model="chosenVoiceURI" label-key="name" value-key="voiceURI">
         <template #item="{ item }">
           <div class="w-96 gap-x-4 gap-y-0.5 grid auto-cols-auto">
-
             <p class="col-start-1 col-span-2">{{ item.name }}</p>
             <p class="justify-self-end">{{ item.lang }}</p>
             <p class="text-sm text-neutral-400"> {{ item.localService ? 'local' : 'remote' }} </p>
             <p class="col-start-3 justify-self-end">{{ item.default ? ' (default)' : '' }}</p>
-            <!-- <p>{{ item.voiceURI }}</p> -->
           </div>
         </template>
       </USelect>
@@ -22,26 +19,9 @@
 
     </form>
     <UFormField size="xl" label="Presets" description="Add to speech queue">
-
       <UButtonGroup orientation="vertical">
         <UButton v-for="speech in presetSpeechs" color="neutral" variant="outline"
           @click="addSpeechToQueue(speech.text, speech)">{{ speech.text }}</UButton>
-        <!-- <UButton color="neutral" variant="outline" @click="addSpeechToQueue('Jag heter Gunnar', { lang: 'se-SV' })">Jag
-          heter Gunnar</UButton>
-        <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('Idag är det torsdag. Imorgon är det måndag. Konstigt va?', { lang: 'se-SV' })">
-          Idag är det torsdag. Imorgon är det måndag. Konstigt va?</UButton>
-        <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('I like big butts and I can not lie!', { lang: 'en-GB' })">
-          I like big butts and I can not lie!</UButton>
-        <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('I like big butts and I cannot lie!', { lang: 'en-US' })">
-          I like big butts and I cannot lie!</UButton>
-        <UButton color="neutral" variant="outline" @click="addSpeechToQueue('Jij hebt mooie ogen', { lang: 'nl-NL' })">
-          Jij hebt mooie ogen</UButton>
-        <UButton color="neutral" variant="outline"
-          @click="addSpeechToQueue('Mi gusta! Dolce VITA! It\'s a me, MARIO!', { lang: 'it-IT' })">
-          Mi gusta! Dolce VITA! It's a me, MARIO!</UButton> -->
       </UButtonGroup>
     </UFormField>
     <div>
@@ -103,7 +83,7 @@ const presetSpeechs = [
     lang: 'se-SV'
   },
   {
-    text: 'Jag heter Gunnar',
+    text: 'Jag heter Gunnar. James Gunnar',
     lang: 'se-SV'
   },
   {
