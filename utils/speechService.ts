@@ -46,3 +46,33 @@ export class MockTTSServiceImpl implements TTSService{
   }
 
 }
+
+
+import { isSpeechSynthesisSupported, initiatateSpeechSynth } from "./webSpeech";
+export class WebSpeechService implements TTSService {
+  private speech = initiatateSpeechSynth()
+  constructor() {
+    if (!isSpeechSynthesisSupported()) {
+      console.error('SpeechSynthesis is not supported on this device');
+      throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
+    }
+  }
+  enqueueSpeech(text: string) {
+    this.speech.addSpeechToQueue(text);
+  }
+  speakDirectly(text: string) {
+    this.speech.clearQueueAndSpeak(text);
+  }
+  cancel() {
+    this.speech.stopAllSpeech();
+  }
+  pause() {
+    this.speech.pause();
+  }
+  resume() {
+    this.speech.resume();
+  }
+  getPendingSpeech() {
+    return this.speech.getSpeechQueue()
+  }
+}

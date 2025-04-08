@@ -46,11 +46,12 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
 
   let currentUtterance: SpeechSynthesisUtterance | undefined = undefined;
   const utteranceQueue: SpeechSynthesisUtterance[] = [];
+  let speechQueue: string[] = [];
   let utteranceQueueUpdatedHandler: undefined | UtteranceQueueUpdatedHandler = undefined;
   function setUtteranceQueueUpdatedListener(handler: UtteranceQueueUpdatedHandler) {
     utteranceQueueUpdatedHandler = handler;
   }
-  function addToQueue(utterance: SpeechSynthesisUtterance) {
+  function addToUtteranceQueue(utterance: SpeechSynthesisUtterance) {
     utteranceQueue.push(utterance);
     utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance added');
   }
@@ -87,6 +88,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.onstart = () => {
       onstartBugFlag = false;
       setCurrentUtteranceFromQueue()
+      speechQueue.shift();
       if (utterance !== currentUtterance) {
         throw new Error('currentUtterance is not the same as utterance. There is a bug');
       }
@@ -104,7 +106,8 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
       currentUtterance = undefined;
       utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance ended');
     }
-    addToQueue(utterance);
+    addToUtteranceQueue(utterance);
+    speechQueue.push(text);
     synth.speak(utterance);
     onstartBugFlag = true;
     setTimeout(() => {
@@ -116,14 +119,21 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
   
   function clearQueueAndSpeak(text: string, options: UtteranceOptions = {}) {
     synth.cancel();
+    utteranceQueue.length = 0;
+    speechQueue.length = 0;
     addSpeechToQueue(text, options);
   }
 
   function stopAllSpeech() {
     synth.cancel();
     utteranceQueue.length = 0;
+    speechQueue.length = 0;
     currentUtterance = undefined;
     utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'all speech cancelled');
+  }
+
+  function getSpeechQueue() {
+    return speechQueue;
   }
 
   function pause() {
@@ -153,6 +163,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     getAvailableVoices,
     setVoicesChangedListener,
     setQueueUpdatedListener: setUtteranceQueueUpdatedListener,
+    getSpeechQueue,
     speechSynthesis: synth,
   }
 }
