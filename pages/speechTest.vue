@@ -16,6 +16,8 @@
         </template>
       </USelect>
       <UButton color="error" @click="stopAllSpeech()">Clear queue</UButton>
+      <UButton @click="getSpeechState()">get speech state</UButton>
+      <pre>{{ speechState }}</pre>
 
     </form>
     <UFormField size="xl" label="Presets" description="Add to speech queue">
@@ -61,6 +63,12 @@ const {
   setQueueUpdatedListener,
   speechSynthesis,
 } = initiatateSpeechSynth();
+
+const speechState = ref<{ pending?: SpeechSynthesis['pending'], speaking?: SpeechSynthesis['speaking'] }>({});
+function getSpeechState() {
+  speechState.value.pending = speechSynthesis.pending;
+  speechState.value.speaking = speechSynthesis.speaking;
+}
 
 const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
 setVoicesChangedListener((voices) => {

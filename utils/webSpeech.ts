@@ -39,6 +39,11 @@ type UtteranceQueueUpdatedHandler = (queue: SpeechSynthesisUtterance[], currentU
 // TODO: handle the bug in Chrome (ium?) where remote voices doesn't work wihtout calling synth.cancel
 // between utterances (I.E not possible to queue utterances).
 export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions = {}) {
+  if (!isSpeechSynthesisSupported()) {
+    console.error('SpeechSynthesis is not supported on this device');
+    throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
+  }
+
   let currentUtterance: SpeechSynthesisUtterance | undefined = undefined;
   const utteranceQueue: SpeechSynthesisUtterance[] = [];
   let utteranceQueueUpdatedHandler: undefined | UtteranceQueueUpdatedHandler = undefined;
@@ -53,10 +58,6 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     // utteranceQueue.splice(utteranceQueue.indexOf(utterance), 1);
     currentUtterance = utteranceQueue.shift();
     utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance started');
-  }
-  if(!isSpeechSynthesisSupported()){
-    console.error('SpeechSynthesis is not supported on this device');
-    throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
   }
   // const defaultUttOpts = defaultUtteranceOptions as (Required<Omit<UtteranceOptions, 'voice'>> & Pick<UtteranceOptions, 'voice'>);
 
