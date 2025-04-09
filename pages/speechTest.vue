@@ -15,7 +15,7 @@
           </div>
         </template>
       </USelect>
-      <UButton color="error" @click="stopAllSpeech()">Clear queue</UButton>
+      <UButton color="error" @click="webSpeech.cancel()">Clear queue</UButton>
       <UButton @click="getSpeechState()">get speech state</UButton>
       <pre>{{ speechState }}</pre>
 
@@ -23,13 +23,13 @@
     <UFormField size="xl" label="Presets" description="Add to speech queue">
       <UButtonGroup orientation="vertical">
         <UButton v-for="speech in presetSpeechs" color="neutral" variant="outline"
-          @click="addSpeechToQueue(speech.text, speech)">{{ speech.text }}</UButton>
+          @click="webSpeech.enqueueSpeech(speech.text, speech)">{{ speech.text }}</UButton>
       </UButtonGroup>
     </UFormField>
     <div>
-      <pre>{{ currentUtterance?.text }}</pre>
+      <pre>{{ currentSpeech }}</pre>
       <USeparator />
-      <pre v-for="ut in speechQueue">{{ ut.text }}</pre>
+      <pre v-for="speech in speechQueue">{{ speech }}</pre>
     </div>
   </div>
 </template>
@@ -38,7 +38,7 @@
 
 function addSpeechWithVoice() {
   console.log('chosenVoice: ', chosenVoice.value);
-  addSpeechToQueue(text.value, {
+  webSpeech.enqueueSpeech(text.value, {
     voice: chosenVoice.value
   });
 }
@@ -53,16 +53,7 @@ const chosenVoice = computed<SpeechSynthesisVoice | undefined>(() => {
   return foundVoice;
 })
 
-const {
-  addSpeechToQueue,
-  stopAllSpeech,
-  pause,
-  resume,
-  getAvailableVoices,
-  setVoicesChangedListener,
-  setQueueUpdatedListener,
-  speechSynthesis,
-} = initiatateSpeechSynth();
+const webSpeech = new WebSpeechService();
 
 const speechState = ref<{ pending?: SpeechSynthesis['pending'], speaking?: SpeechSynthesis['speaking'] }>({});
 function getSpeechState() {
@@ -70,17 +61,17 @@ function getSpeechState() {
   speechState.value.speaking = speechSynthesis.speaking;
 }
 
-const availableVoices = ref<SpeechSynthesisVoice[]>(getAvailableVoices() ?? []);
-setVoicesChangedListener((voices) => {
+const availableVoices = ref<SpeechSynthesisVoice[]>(webSpeech.getAvailableVoices() ?? []);
+webSpeech.setVoicesChangedListener((voices) => {
   availableVoices.value = voices
 })
 
-const speechQueue = ref<SpeechSynthesisUtterance[]>([]);
-const currentUtterance = ref<SpeechSynthesisUtterance | undefined>();
-setQueueUpdatedListener((newQueue, newCurrentUtterance, reason) => {
-  console.log(`UtteranceQueue updated (${reason}):`, newCurrentUtterance?.text, newQueue);
-  speechQueue.value = [...newQueue];
-  currentUtterance.value = newCurrentUtterance;
+const speechQueue = ref<string[]>([]);
+const currentSpeech = ref<string>();
+webSpeech.onSpeechQueueUpdated((pendingSpeech, newCurrentSpeech, reason) => {
+  console.log(`UtteranceQueue updated (${reason}):`, newCurrentSpeech, pendingSpeech);
+  speechQueue.value = [...pendingSpeech];
+  currentSpeech.value = newCurrentSpeech;
 });
   
 const text = ref('Hello. My name is Robert and I\'m a robot!!!');

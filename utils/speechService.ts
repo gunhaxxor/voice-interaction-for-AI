@@ -1,16 +1,24 @@
-
-export interface TTSService{
-  speakDirectly(text: string): void,
+type PossibleLanguages = 'en-US' | 'en-GB' | (string & {})
+interface TTSServiceSpeechOptions {
+  lang?: PossibleLanguages,
+  speed?: number
+  pitch?: number
+}
+export interface TTSService {
+  speakDirectly(text: string, options?: TTSServiceSpeechOptions): void,
   pause(): void,
   resume(): void,
   cancel(): void,
-  enqueueSpeech(text: string): void,
+  enqueueSpeech(text: string, options?: TTSServiceSpeechOptions): void,
   getPendingSpeech(): string[],
+  getCurrentSpeech(): string | undefined,
+  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
 
 export class MockTTSServiceImpl implements TTSService{
   private queue: string[] = [];
   private currentSpeech: string | undefined = undefined;
+  private queueHandler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void
   constructor(){
 
   } 
@@ -18,12 +26,14 @@ export class MockTTSServiceImpl implements TTSService{
   speakDirectly(text: string): void {
     this.currentSpeech = text;
     this.queue.length = 0;
+    this.queueHandler?.(this.queue, this.currentSpeech, 'directly');
     console.log(text);
   }
 
   cancel(): void {
     this.queue.length = 0;
     this.currentSpeech = undefined;
+    this.queueHandler?.(this.queue, this.currentSpeech, 'all speech cancelled');
     console.log('cancel');
   }
   
@@ -37,6 +47,7 @@ export class MockTTSServiceImpl implements TTSService{
 
   enqueueSpeech(text: string): void {
     this.queue.push(text);
+    this.queueHandler?.(this.queue, this.currentSpeech, 'speech added');
     console.log('enqueueSpeech');
   }
 
@@ -45,22 +56,32 @@ export class MockTTSServiceImpl implements TTSService{
     return this.queue;
   }
 
+  getCurrentSpeech(): string | undefined {
+    console.log('getCurrentSpeech');
+    return this.currentSpeech
+  }
+
+  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
+    this.queueHandler = handler;
+  }
+
 }
 
 
-import { isSpeechSynthesisSupported, initiatateSpeechSynth } from "./webSpeech";
+import { isSpeechSynthesisSupported, initiatateSpeechSynth, type UtteranceOptions } from "./webSpeech";
 export class WebSpeechService implements TTSService {
-  private speech = initiatateSpeechSynth()
-  constructor() {
+  private speech: ReturnType<typeof initiatateSpeechSynth>
+  constructor(options?: Parameters<typeof initiatateSpeechSynth>[0]) {
     if (!isSpeechSynthesisSupported()) {
       console.error('SpeechSynthesis is not supported on this device');
       throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
     }
+    this.speech = initiatateSpeechSynth(options)
   }
-  enqueueSpeech(text: string) {
+  enqueueSpeech(text: string, options?: UtteranceOptions) {
     this.speech.addSpeechToQueue(text);
   }
-  speakDirectly(text: string) {
+  speakDirectly(text: string, options?: UtteranceOptions) {
     this.speech.clearQueueAndSpeak(text);
   }
   cancel() {
@@ -74,5 +95,22 @@ export class WebSpeechService implements TTSService {
   }
   getPendingSpeech() {
     return this.speech.getSpeechQueue()
+  }
+  getCurrentSpeech(): string | undefined {
+    return this.speech.getCurrentSpeech();
+  }
+
+  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
+    this.speech.setSpeechQueueUpdatedListener(handler);
+  }
+
+  // Implementation specific functionality
+  // Should prefer to not use this as its not in interface and thus not as easily replaceable
+
+  getAvailableVoices() {
+    return this.speech.getAvailableVoices();
+  }
+  setVoicesChangedListener(handler: (voices: SpeechSynthesisVoice[]) => void) {
+    this.speech.setVoicesChangedListener(handler);
   }
 }
