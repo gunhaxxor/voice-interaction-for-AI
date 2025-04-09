@@ -21,15 +21,24 @@ export class MockTTSServiceImpl implements TTSService{
   private queue: string[] = [];
   private currentSpeech: string | undefined = undefined;
   private queueHandler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void
+
+  private speechState: SpeechState = 'idle';
   private speechStateHandler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void
   constructor(){
 
   } 
   
+  private setNewSpeechState(newSpeechState: SpeechState): void {
+    const prevSpeechState = this.speechState;
+    this.speechState = newSpeechState;
+    this.speechStateHandler?.(newSpeechState, prevSpeechState);
+  }
+
   speakDirectly(text: string): void {
     this.currentSpeech = text;
     this.queue.length = 0;
     this.queueHandler?.(this.queue, this.currentSpeech, 'directly');
+    this.setNewSpeechState('speaking');
     console.log(text);
   }
 
@@ -37,20 +46,24 @@ export class MockTTSServiceImpl implements TTSService{
     this.queue.length = 0;
     this.currentSpeech = undefined;
     this.queueHandler?.(this.queue, this.currentSpeech, 'all speech cancelled');
+    this.setNewSpeechState('idle');
     console.log('cancel');
   }
   
   pause(): void {
     console.log('pause');
+    this.setNewSpeechState('paused')
   }
   
   resume(): void {
     console.log('resume');
+    this.setNewSpeechState('speaking');
   }
 
   enqueueSpeech(text: string): void {
     this.queue.push(text);
     this.queueHandler?.(this.queue, this.currentSpeech, 'speech added');
+    this.setNewSpeechState('speaking');
     console.log('enqueueSpeech');
   }
 
@@ -66,6 +79,10 @@ export class MockTTSServiceImpl implements TTSService{
 
   onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
     this.queueHandler = handler;
+  }
+
+  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+    this.speechStateHandler = handler
   }
 
 }
