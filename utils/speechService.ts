@@ -13,6 +13,7 @@ export interface TTSService {
   enqueueSpeech(text: string, options?: TTSServiceSpeechOptions): void,
   getPendingSpeech(): string[],
   getCurrentSpeech(): string | undefined,
+  getCurrentSpeechState(): SpeechState,
   onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void
   onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
@@ -85,6 +86,10 @@ export class MockTTSServiceImpl implements TTSService{
     this.speechStateHandler = handler
   }
 
+  getCurrentSpeechState(): SpeechState {
+    return this.speechState;
+  }
+
 }
 
 
@@ -120,9 +125,19 @@ export class WebSpeechService implements TTSService {
     return this.speech.getCurrentSpeech();
   }
 
+  getCurrentSpeechState(): SpeechState {
+    const state = this.speech.speechSynthesis.speaking ? 'speaking' : this.speech.speechSynthesis.paused ? 'paused' : 'idle';
+    return state
+  }
+
   onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
     this.speech.setSpeechQueueUpdatedListener(handler);
   }
+
+  // TODO: implement this!!!!!!!!
+  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+  }
+
 
   // Implementation specific functionality
   // Should prefer to not use this as its not in interface and thus not as easily replaceable
