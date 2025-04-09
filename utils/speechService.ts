@@ -1,4 +1,5 @@
 type PossibleLanguages = 'en-US' | 'en-GB' | (string & {})
+type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
 interface TTSServiceSpeechOptions {
   lang?: PossibleLanguages,
   speed?: number
@@ -12,6 +13,7 @@ export interface TTSService {
   enqueueSpeech(text: string, options?: TTSServiceSpeechOptions): void,
   getPendingSpeech(): string[],
   getCurrentSpeech(): string | undefined,
+  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void
   onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
 
@@ -19,6 +21,7 @@ export class MockTTSServiceImpl implements TTSService{
   private queue: string[] = [];
   private currentSpeech: string | undefined = undefined;
   private queueHandler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void
+  private speechStateHandler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void
   constructor(){
 
   } 
@@ -79,10 +82,10 @@ export class WebSpeechService implements TTSService {
     this.speech = initiatateSpeechSynth(options)
   }
   enqueueSpeech(text: string, options?: UtteranceOptions) {
-    this.speech.addSpeechToQueue(text);
+    this.speech.addSpeechToQueue(text, options);
   }
   speakDirectly(text: string, options?: UtteranceOptions) {
-    this.speech.clearQueueAndSpeak(text);
+    this.speech.clearQueueAndSpeak(text, options);
   }
   cancel() {
     this.speech.stopAllSpeech();
