@@ -9,7 +9,8 @@ export interface UtteranceOptions {
    *
    * @default 'en-US'
    */
-  lang?: SpeechSynthesisUtterance['lang']
+  // lang?: SpeechSynthesisUtterance['lang']
+  lang?: PossibleLanguages
   /**
    * Gets and sets the pitch at which the utterance will be spoken at.
    *

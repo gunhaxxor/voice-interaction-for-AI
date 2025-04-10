@@ -96,6 +96,7 @@ export class MockTTSServiceImpl implements TTSService{
 import { isSpeechSynthesisSupported, initiatateSpeechSynth, type UtteranceOptions } from "./webSpeech";
 export class WebSpeechService implements TTSService {
   private speech: ReturnType<typeof initiatateSpeechSynth>
+
   constructor(options?: Parameters<typeof initiatateSpeechSynth>[0]) {
     if (!isSpeechSynthesisSupported()) {
       console.error('SpeechSynthesis is not supported on this device');

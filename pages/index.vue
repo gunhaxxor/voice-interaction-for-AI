@@ -86,11 +86,25 @@ const currentListenModeIcon = computed(() => {
 })
 
 const currentSpeechSynthText = ref('Tjenare');
-const { utterance, speak, resume, status: speechStatus, isPlaying: speechIsPlaying, stop: stopSpeech, error: speechError, isSupported } = useSpeechSynthesisCustom(currentSpeechSynthText, {
-  lang: 'sv-SE',
-  pitch: 1,
-  rate: 1.5,
-});
+const webSpeech = new WebSpeechService({ lang: 'sv-SE', pitch: 5, rate: 1.7 });
+
+const speechIsPlaying = ref(false);
+webSpeech.onSpeechStateChanged((newSpeechState) => {
+  speechIsPlaying.value = newSpeechState === 'speaking' ? true : false;
+})
+// const { utterance,
+//   speak,
+//   resume,
+//   status: speechStatus,
+//   isPlaying: speechIsPlaying,
+//   stop: stopSpeech,
+//   error: speechError,
+//   isSupported } = useSpeechSynthesisCustom(currentSpeechSynthText,
+//     {
+//   lang: 'sv-SE',
+//   pitch: 1,
+//   rate: 1.5,
+// });
 const autoSpeak = ref(false);
 const toggleAutoSpeak = useToggle(autoSpeak);
 
@@ -106,13 +120,13 @@ const parsedMessages = computed(() => {
   })
 })
 
-watch(chatStatus, () => {
-  if (chatStatus.value === 'ready' && messages.value.length !== 0) {
-    currentSpeechSynthText.value = messages.value[messages.value.length - 1].content;
-    // console.log('chatStatus ready!', currentSpeechSynthText.value);
-    // speak();
-  }
-});
+// watch(chatStatus, () => {
+//   if (chatStatus.value === 'ready' && messages.value.length !== 0) {
+//     currentSpeechSynthText.value = messages.value[messages.value.length - 1].content;
+//     // console.log('chatStatus ready!', currentSpeechSynthText.value);
+//     // speak();
+//   }
+// });
 
 watch(chatData, () => {
   console.log('data updated:', chatData.value);
@@ -139,8 +153,8 @@ async function readNextSentencesLoop() {
     console.log('read next sentence resolved', sentence, done);
     if (done) break;
     // speechQueue.value.push(sentence)
-    currentSpeechSynthText.value = sentence;
-    speak();
+    // currentSpeechSynthText.value = sentence;
+    webSpeech.enqueueSpeech(sentence);
   }
 }
 
@@ -215,6 +229,8 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
   // console.log(messageContainer.value?.lastElementChild?.lastElementChild);
   messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
     behavior: 'smooth',
+    block: 'end',
+
   });
 })
 
@@ -260,12 +276,12 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
             <div :class="debugPanelClasses">
               <p>Playing: </p>
               <p>{{ speechIsPlaying }}</p>
-              <p>Error: </p>
-              <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p>
-              <p>Status: </p>
-              <p>{{ speechStatus }}</p>
-              <p>Utterance: </p>
-              <p>{{ utterance.text }}</p>
+              <!-- <p>Error: </p>
+              <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p> -->
+              <!-- <p>Status: </p>
+              <p>{{ speechStatus }}</p> -->
+              <!-- <p>Utterance: </p>
+              <p>{{ utterance.text }}</p> -->
               <p>Current Text: </p>
               <p>{{ currentSpeechSynthText }}</p>
             </div>
@@ -322,9 +338,11 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       </UButton> -->
       <UButton class="rounded-full" size="xl" :icon="currentListenModeIcon" @click="nextListenMode()"></UButton>
       <!-- <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch> -->
-      <UButton @click="speak()">Speak</UButton>
-      <UButton @click="resume()">Resume</UButton>
-      <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="stopSpeech()"></UButton>
+      <UButton @click="webSpeech.enqueueSpeech(writtenInput)">Speak</UButton>
+      <UButton @click="webSpeech.pause()">Pause</UButton>
+      <UButton @click="webSpeech.resume()">Resume</UButton>
+      <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="webSpeech.cancel()">
+      </UButton>
       <div class="grow"></div>
     </form>
   </div>
