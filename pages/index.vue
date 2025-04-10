@@ -60,7 +60,6 @@ recognition.onInterimTextReceived((text) => {
   // interimTranscript.value = text;
 })
 
-
 const listenModes: ('listen' | 'listenAndSend' | 'inactive')[] = ['listen', 'listenAndSend', 'inactive'];
 const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes, { initialValue: 'inactive' });
 watch(currentListenMode, (newListenMode) => {

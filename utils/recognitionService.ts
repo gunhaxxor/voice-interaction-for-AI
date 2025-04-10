@@ -17,6 +17,7 @@ export interface STTService {
 export class WebRecognitionService implements STTService {
   private recognition: SpeechRecognition;
   private defaultListenOptions?: STTServiceListenOptions;
+  private listeningTargetState: ListeningState = 'inactive';
 
   constructor(options?: STTServiceListenOptions) {
     this.defaultListenOptions = options;
@@ -27,6 +28,7 @@ export class WebRecognitionService implements STTService {
     this.recognition = new SpeechRecognition();
   }
   async startListenAudio(options?: STTServiceListenOptions) {
+    this.listeningTargetState = 'listening';
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
     this.recognition.lang = options?.lang ?? this.defaultListenOptions?.lang ?? 'en-US';
@@ -44,13 +46,21 @@ export class WebRecognitionService implements STTService {
     }
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.recognition.onstart = () => {
-      console.log('recognition listen started');
+      // console.log('recognition listen started');
       this.setListeningState('listening');
       resolve();
+    }
+    this.recognition.onend = () => {
+      // console.log('recognition listen stopped');
+      if (this.listeningTargetState === 'listening') {
+        console.warn('recognition listen ended by browser, will try start it again');
+        this.recognition.start();
+      }
     }
     return promise;
   }
   stopListenAudio(): void {
+    this.listeningTargetState = 'inactive';
     this.setListeningState('inactive');
     this.recognition.stop();
   }
