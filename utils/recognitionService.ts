@@ -17,6 +17,7 @@ export interface STTService {
 export class WebRecognitionService implements STTService {
   private recognition: SpeechRecognition;
   private defaultListenOptions?: STTServiceListenOptions;
+
   constructor(options?: STTServiceListenOptions) {
     this.defaultListenOptions = options;
     const SpeechRecognition = window && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)

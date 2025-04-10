@@ -31,22 +31,47 @@ onStartTyping(() => {
   }
 })
 
-const { isListening, start: startListening, stop: stopListening, result: ListeningResult, isFinal: ListeningResultIsFinal, error: ListeningError, recognition } = useSpeechRecognition({
+// const { isListening, start: startListening, stop: stopListening, result: ListeningResult, isFinal: ListeningResultIsFinal, error: ListeningError, recognition } = useSpeechRecognition({
+//   lang: 'sv-SE',
+//   interimResults: true,
+//   continuous: true,
+// })
+const recognition = new WebRecognitionService({
   lang: 'sv-SE',
-  interimResults: true,
-  continuous: true,
 })
+const recognitionIsListening = ref(false);
+recognition.onListeningStateChanged((state) => {
+  recognitionIsListening.value = state === 'listening' ? true : false;
+})
+// const currentTranscript = ref('');
+recognition.onTextReceived((text) => {
+  writtenInput.value = text;
+  // currentTranscript.value = text;
+  // interimTranscript.value = '';
+  if (currentListenMode.value === 'listenAndSend') {
+    submitChatInput();
+  }
+  // input.value = text;
+})
+// const interimTranscript = ref('');
+recognition.onInterimTextReceived((text) => {
+  writtenInput.value = text;
+  // currentTranscript.value = '';
+  // interimTranscript.value = text;
+})
+
+
 const listenModes: ('listen' | 'listenAndSend' | 'inactive')[] = ['listen', 'listenAndSend', 'inactive'];
 const { state: currentListenMode, next: nextListenMode } = useCycleList(listenModes, { initialValue: 'inactive' });
 watch(currentListenMode, (newListenMode) => {
   switch (newListenMode) {
     case 'listen':
-      startListening();
+      recognition.startListenAudio();
       break;
     case 'listenAndSend':
       break;
     case 'inactive':
-      stopListening();
+      recognition.stopListenAudio();
       break;
   }
 });
@@ -70,7 +95,7 @@ const { utterance, speak, resume, status: speechStatus, isPlaying: speechIsPlayi
 const autoSpeak = ref(false);
 const toggleAutoSpeak = useToggle(autoSpeak);
 
-const { messages, input, handleSubmit, status: chatStatus, data: chatData } = useChat()
+const { messages, input: writtenInput, handleSubmit, status: chatStatus, data: chatData } = useChat()
 const parsedMessages = computed(() => {
   return messages.value.map((message) => {
     return {
@@ -143,30 +168,30 @@ watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) =
   // console.log(prevMessages[newMessages.length - 1].parts);
 })
 
-const resultsAppended = ref('')
+const combinedInput = ref('')
 
-watch(ListeningResultIsFinal, () => {
-  if (ListeningResultIsFinal.value) {
-    resultsAppended.value += ListeningResult.value
-    input.value = resultsAppended.value
-    if (currentListenMode.value === 'listenAndSend') {
-      // handleSubmit();
-      submit()
-    }
-  }
-})
+// watch(ListeningResultIsFinal, () => {
+//   if (ListeningResultIsFinal.value) {
+//     resultsAppended.value += ListeningResult.value
+//     input.value = resultsAppended.value
+//     if (currentListenMode.value === 'listenAndSend') {
+//       // handleSubmit();
+//       submit()
+//     }
+//   }
+// })
 
-watch(ListeningResult, () => {
-  if (isListening.value) {
-    // input.value = ListeningResult.value;
-    if(!ListeningResultIsFinal.value){
-      input.value = resultsAppended.value + ListeningResult.value
-    }
-  }
-})
+// watch(ListeningResult, () => {
+//   if (isListening.value) {
+//     // input.value = ListeningResult.value;
+//     if(!ListeningResultIsFinal.value){
+//       input.value = resultsAppended.value + ListeningResult.value
+//     }
+//   }
+// })
 
-function submit() {
-  resultsAppended.value = ''
+function submitChatInput() {
+  combinedInput.value = ''
   handleSubmit()
 }
 
@@ -214,13 +239,13 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
             <div :class="debugPanelClasses">
               <p>Listening: </p>
-              <p>{{ isListening }}</p>
-              <p>Final: </p>
-              <p>{{ ListeningResultIsFinal }}</p>
-              <p>Error: </p>
-              <p>{{ ListeningError?.message }}</p>
-              <p>Result: </p>
-              <p>{{ ListeningResult }}</p>
+              <p>{{ recognition.getListeningState() }}</p>
+              <!-- <p>Final: </p>
+              <p>{{ ListeningResultIsFinal }}</p> -->
+              <!-- <p>Error: </p>
+              <p>{{ ListeningError?.message }}</p> -->
+              <!-- <p>Result: </p>
+              <p>{{ ListeningResult }}</p> -->
               <p>ListenMode: </p>
               <p>{{ currentListenMode }}</p>
             </div>
@@ -267,7 +292,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </UCollapsible>
       </UCard>
     </div>
-    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto mb-24">
+    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto pb-24">
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
@@ -280,15 +305,16 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     </div>
     <form
       class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
-      @submit.prevent="submit">
+      @submit.prevent="submitChatInput">
       <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
         @click="nextVideoUrl()"></UButton>
       <div class="grow"></div>
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
-      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="submit" :ui="{ base: 'resize-none' }"
-        class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="input" @update:model-value="resultsAppended = input">
+      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="submitChatInput" :ui="{ base: 'resize-none' }"
+        class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="writtenInput"
+        @update:model-value="combinedInput = writtenInput">
       </UTextarea>
       <UButton size="xl" type="submit" icon="i-lucide-send"></UButton>
       <!-- <UButton size="xl" :variant="isListening ? 'solid' : 'soft'" :color="isListening ? 'primary' : 'warning'"
