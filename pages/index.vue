@@ -224,7 +224,6 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     <div class="fixed w-screen h-screen">
       <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
         class="object-cover w-full h-full brightness-50 ">
-        <!-- <source :src="currentVideoUrl" type="video/mp4"> -->
       </video>
     </div>
     <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
