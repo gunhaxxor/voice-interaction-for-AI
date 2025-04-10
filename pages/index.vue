@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { marked, } from 'marked';
 import { useChat } from '@ai-sdk/vue';
-import { useSpeechSynthesisCustom } from '~/composables/useSpeechSynthesis';
 
 const videoUrls = shallowRef([
   '/videos/71122-537102350_small.mp4',
@@ -31,11 +30,6 @@ onStartTyping(() => {
   }
 })
 
-// const { isListening, start: startListening, stop: stopListening, result: ListeningResult, isFinal: ListeningResultIsFinal, error: ListeningError, recognition } = useSpeechRecognition({
-//   lang: 'sv-SE',
-//   interimResults: true,
-//   continuous: true,
-// })
 const recognition = new WebRecognitionService({
   lang: 'sv-SE',
 })
@@ -92,19 +86,6 @@ const speechIsPlaying = ref(false);
 webSpeech.onSpeechStateChanged((newSpeechState) => {
   speechIsPlaying.value = newSpeechState === 'speaking' ? true : false;
 })
-// const { utterance,
-//   speak,
-//   resume,
-//   status: speechStatus,
-//   isPlaying: speechIsPlaying,
-//   stop: stopSpeech,
-//   error: speechError,
-//   isSupported } = useSpeechSynthesisCustom(currentSpeechSynthText,
-//     {
-//   lang: 'sv-SE',
-//   pitch: 1,
-//   rate: 1.5,
-// });
 const autoSpeak = ref(false);
 const toggleAutoSpeak = useToggle(autoSpeak);
 
@@ -338,7 +319,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       </UButton> -->
       <UButton class="rounded-full" size="xl" :icon="currentListenModeIcon" @click="nextListenMode()"></UButton>
       <!-- <USwitch v-model="autoSendSpeech" icon>Auto send</USwitch> -->
-      <UButton @click="webSpeech.enqueueSpeech(writtenInput)">Speak</UButton>
+      <!-- <UButton @click="webSpeech.enqueueSpeech(writtenInput)">Speak</UButton> -->
       <UButton @click="webSpeech.pause()">Pause</UButton>
       <UButton @click="webSpeech.resume()">Resume</UButton>
       <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="webSpeech.cancel()">
