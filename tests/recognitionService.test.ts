@@ -17,14 +17,14 @@ describe('MockSTTService', () => {
   })
   test('can addTextReceivedListener without error', () => {
     const sttService = new MockSTTService();
-    sttService.addTextReceivedListener(() => {});
+    sttService.onTextReceived(() => { });
   })
   test('receives events if event listener added and startListenAudio', async () => {
     const mocklistener = vi.fn((text: string) => {
       // console.log(text);
     });
     const sttService = new MockSTTService();
-    sttService.addTextReceivedListener(mocklistener);
+    sttService.onTextReceived(mocklistener);
     sttService.startListenAudio();
     await vi.waitUntil(() => mocklistener.mock.calls.length > 0, { timeout: 3000 });
     // mocklistener('asdf');
@@ -38,7 +38,7 @@ describe('MockSTTService', () => {
     const sttService = new MockSTTService();
     sttService.startListenAudio();
     sttService.stopListenAudio()
-    sttService.addTextReceivedListener(mocklistener);
+    sttService.onTextReceived(mocklistener);
     await vi.waitUntil(() => mocklistener.mock.calls.length === 0, { timeout: 40 });
     // mocklistener('asdf');
     // console.log(mocklistener.mock.calls.length);
@@ -49,8 +49,8 @@ describe('MockSTTService', () => {
     });
     const sttService = new MockSTTService();
     sttService.startListenAudio();
-    sttService.addTextReceivedListener(mocklistener);
-    sttService.removeTextReceivedListener(mocklistener);
+    sttService.onTextReceived(mocklistener);
+    sttService.onTextReceived(undefined);
     await vi.waitUntil(() => mocklistener.mock.calls.length === 0, { timeout: 40 });
     // mocklistener('asdf');
     // console.log(mocklistener.mock.calls.length);

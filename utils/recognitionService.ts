@@ -1,13 +1,16 @@
+interface STTServiceListenOptions {
+  lang?: PossibleLanguages
+}
 export interface STTService {
-  startListenAudio(): void;
+  startListenAudio(options?: STTServiceListenOptions): Promise<void>;
   stopListenAudio(): void;
   // getTranscript(): string;
-  addTextReceivedListener(listener: (text: string) => void): void;
-  removeTextReceivedListener(listener: (text: string) => void): void;
+  onTextReceived(handler?: ((text: string) => void)): void;
+  onInterimTextReceived(handler?: ((text: string) => void)): void;
+  // removeTextReceivedListener(listener: (text: string) => void): void;
 }
 
 export class MockSTTService implements STTService {
-  private ee = new TinyEventEmitter();
   private readonly randomTexts = [
     'Hello!',
     // 'How are you?',
@@ -17,78 +20,79 @@ export class MockSTTService implements STTService {
     // 'How about next year?'
   ]
   private currentInterval = 0;
-  startListenAudio(): void {
+  async startListenAudio() {
     console.log('startListening audio');
     // clear previous interval if is set
     if(this.currentInterval) clearInterval(this.currentInterval);
 
     this.currentInterval = setInterval(() => {
       console.log('setting interval');
-      // this.ee.triggerEvent('textReceived', this.randomTexts.at(Math.floor(Math.random() * this.randomTexts.length))!);
-      this.ee.triggerEvent('textReceived', 'Hello!');
+      this.interimTextReceivedHandler?.('Hel');
+      this.textReceivedHandler?.('Hello!');
     }, 100);
+
+    return Promise.resolve();
   }
   stopListenAudio(): void {
     console.log('stopListening audio');
     clearInterval(this.currentInterval);
   }
-  // getTranscript(): string {
-  //   return 'mock transcript';
-  // }
-  addTextReceivedListener(listener: (text: string) => void): void {
-    this.ee.addListener('textReceived', listener);
+
+  private textReceivedHandler?: (text: string) => void;
+  onTextReceived(handler?: (text: string) => void): void {
+    this.textReceivedHandler = handler;
   }
-  removeTextReceivedListener(listener: (text: string) => void): void {
-    this.ee.removeListener('textReceived', listener);
+
+  private interimTextReceivedHandler?: (text: string) => void;
+  onInterimTextReceived(handler?: (text: string) => void): void {
+    this.interimTextReceivedHandler = handler;
   }
 }
 
-// type EvtMap = Record<string, (param: string) => void>
-
-// interface STTEvents extends EvtMap {
-//   textReceived: (text: string) => void
-// } 
-
-class TinyEventEmitter {
-  // eventTarget: EventTarget;
-  private callbacks: Map<string, Set<Function>>
-  // private fallbackCallback?: (type: string, data: unknown) => void;
-  constructor() {
-    // this.eventTarget = new EventTarget();
-    this.callbacks = new Map();
-  }
-  // onUnregistered(callback: (type: string, data: unknown) => void){
-  //   // this.fallbackCallback = callback;
-  // }
-  
-  addListener<K extends string, L extends (data:any) => void>(event: K, listener: L): void {
-    // console.log('attaching eventhandler:', type, callback);
-    if(!this.callbacks.has(event)){
-      this.callbacks.set(event, new Set())
+export class WebRecognitionService implements STTService {
+  private recognition: SpeechRecognition;
+  private defaultListenOptions?: STTServiceListenOptions;
+  constructor(options?: STTServiceListenOptions) {
+    this.defaultListenOptions = options;
+    const SpeechRecognition = window && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+    if (!SpeechRecognition) {
+      throw new Error('Speech Recognition is not supported in this browser');
     }
-    this.callbacks.get(event)?.add(listener);
+    this.recognition = new SpeechRecognition();
   }
-  removeListener<K extends string, L extends (data:any) => void>(event: K, listener: L): void {
-    this.callbacks.get(event)?.delete(listener);
+  private textReceivedHandler?: (text: string) => void;
+  private interimTextReceivedHandler?: (text: string) => void;
+  async startListenAudio(options?: STTServiceListenOptions) {
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = options?.lang ?? this.defaultListenOptions?.lang ?? 'en-US';
+    this.recognition.start();
+    this.recognition.onresult = (evt) => {
+      const resultList = evt.results;
+      const latestResult = resultList[resultList.length - 1];
+      const isFinal = latestResult.isFinal;
+      const text = latestResult[0].transcript;
+      if (isFinal) {
+        this.textReceivedHandler?.(text);
+      } else {
+        this.interimTextReceivedHandler?.(text);
+      }
+    }
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
+    this.recognition.onstart = () => {
+      console.log('recognition listen started');
+      resolve();
+    }
+    return promise;
+  }
+  stopListenAudio(): void {
+    this.recognition.stop();
+  }
+  onTextReceived(handler?: (text: string) => void): void {
+    this.textReceivedHandler = handler;
   }
   
-  removeAllListers<K extends string>(event: K): void {
-    this.callbacks.delete(event);
-  }
-  
-  triggerEvent<K extends string>(type: K, data: unknown){
-    console.log('evt triggered', type, data);
-    const cbSet = this.callbacks.get(type);
-    if(cbSet === undefined){
-      // throw Error('received event which didnt have an attached handler');
-      // if(this.fallbackCallback){
-      //   // console.log('fbc: ', type, data);
-      //   this.fallbackCallback(type, data);
-      //   return;
-      // }
-      console.warn('received event for which no handler exists');
-      return;
-    };
-    cbSet.forEach((cb) => cb(data))
+  onInterimTextReceived(handler?: ((text: string) => void)): void {
+    this.interimTextReceivedHandler = handler;
   }
 }

@@ -1,6 +1,4 @@
 
-type PossibleLanguages = 'en-US' | 'en-GB' | (string & {})
-
 export type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
 interface TTSServiceSpeechOptions {
   lang?: PossibleLanguages,
@@ -16,8 +14,8 @@ export interface TTSService {
   getPendingSpeech(): string[],
   getCurrentSpeech(): string | undefined,
   getCurrentSpeechState(): SpeechState,
-  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void
-  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
+  onSpeechStateChanged(handler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void
+  onSpeechQueueUpdated(handler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
 
 export class MockTTSServiceImpl implements TTSService{
@@ -80,11 +78,11 @@ export class MockTTSServiceImpl implements TTSService{
     return this.currentSpeech
   }
 
-  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
+  onSpeechQueueUpdated(handler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
     this.queueHandler = handler;
   }
 
-  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+  onSpeechStateChanged(handler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
     this.speechStateHandler = handler
   }
 
