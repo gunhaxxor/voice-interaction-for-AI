@@ -16,7 +16,8 @@
         </template>
       </USelect>
       <UButton color="error" @click="webSpeech.cancel()">Clear queue</UButton>
-      <UButton @click="getSpeechState()">get speech state</UButton>
+      <UButton @click="webSpeech.pause()">Pause</UButton>
+      <UButton @click="webSpeech.resume()">Resume</UButton>
       <pre>{{ speechState }}</pre>
 
     </form>
@@ -55,12 +56,6 @@ const chosenVoice = computed<SpeechSynthesisVoice | undefined>(() => {
 
 const webSpeech = new WebSpeechService();
 
-const speechState = ref<{ pending?: SpeechSynthesis['pending'], speaking?: SpeechSynthesis['speaking'] }>({});
-function getSpeechState() {
-  speechState.value.pending = speechSynthesis.pending;
-  speechState.value.speaking = speechSynthesis.speaking;
-}
-
 const availableVoices = ref<SpeechSynthesisVoice[]>(webSpeech.getAvailableVoices() ?? []);
 webSpeech.setVoicesChangedListener((voices) => {
   availableVoices.value = voices
@@ -73,6 +68,11 @@ webSpeech.onSpeechQueueUpdated((pendingSpeech, newCurrentSpeech, reason) => {
   speechQueue.value = [...pendingSpeech];
   currentSpeech.value = newCurrentSpeech;
 });
+
+const speechState = ref<SpeechState>(webSpeech.getCurrentSpeechState());
+webSpeech.onSpeechStateChanged((newSpeechState) => {
+  speechState.value = newSpeechState;
+})
   
 const text = ref('Hello. My name is Robert and I\'m a robot!!!');
 

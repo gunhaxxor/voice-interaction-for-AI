@@ -1,5 +1,7 @@
+
 type PossibleLanguages = 'en-US' | 'en-GB' | (string & {})
-type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
+
+export type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
 interface TTSServiceSpeechOptions {
   lang?: PossibleLanguages,
   speed?: number
@@ -125,19 +127,17 @@ export class WebSpeechService implements TTSService {
     return this.speech.getCurrentSpeech();
   }
 
-  getCurrentSpeechState(): SpeechState {
-    const state = this.speech.speechSynthesis.speaking ? 'speaking' : this.speech.speechSynthesis.paused ? 'paused' : 'idle';
-    return state
-  }
-
   onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
     this.speech.setSpeechQueueUpdatedListener(handler);
   }
 
-  // TODO: implement this!!!!!!!!
-  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+  getCurrentSpeechState(): SpeechState {
+    return this.speech.getCurrentSpeechState();
   }
 
+  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+    this.speech.setSpeechStateChangedListener(handler);
+  }
 
   // Implementation specific functionality
   // Should prefer to not use this as its not in interface and thus not as easily replaceable

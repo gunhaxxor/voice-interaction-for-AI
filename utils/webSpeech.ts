@@ -34,8 +34,11 @@ export interface UtteranceOptions {
   volume?: SpeechSynthesisUtterance['volume']
 }
 
+type SpeechState = 'idle' | 'speaking' | 'paused' | 'error';
+
 type UtteranceQueueUpdatedHandler = (utteranceQueue: SpeechSynthesisUtterance[], currentUtterance: SpeechSynthesisUtterance | undefined, reason?: string) => void
 type SpeechQueueUpdatedHandler = (speechQueue: string[], currentSpeech: string | undefined, reason?: string) => void
+type SpeechStateChangedHandler = (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void
 
 // TODO: handle the bug in Chrome (ium?) where remote voices doesn't work wihtout calling synth.cancel
 // between utterances (I.E not possible to queue utterances).
@@ -43,6 +46,13 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
   if (!isSpeechSynthesisSupported()) {
     console.error('SpeechSynthesis is not supported on this device');
     throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
+  }
+
+  let speechState: SpeechState = 'idle';
+  function setNewSpeechState(newSpeechState: SpeechState) {
+    const prevSpeechState = speechState;
+    speechState = newSpeechState;
+    speechStateChangedHandler?.(newSpeechState, prevSpeechState);
   }
 
   let currentUtterance: SpeechSynthesisUtterance | undefined = undefined;
@@ -59,6 +69,15 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
   let speechQueueUpdatedHandler: undefined | SpeechQueueUpdatedHandler = undefined;
   function setSpeechQueueUpdatedListener(handler: SpeechQueueUpdatedHandler) {
     speechQueueUpdatedHandler = handler;
+  }
+
+  let speechStateChangedHandler: undefined | SpeechStateChangedHandler = undefined;
+  function setSpeechStateChangedListener(handler: SpeechStateChangedHandler) {
+    speechStateChangedHandler = handler;
+  }
+
+  function getCurrentSpeechState(): SpeechState {
+    return speechState;
   }
 
   function addToQueue(utterance: SpeechSynthesisUtterance) {
@@ -102,24 +121,31 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.onstart = () => {
       onstartBugFlag = false;
       setCurrentFromQueue()
+      setNewSpeechState('speaking');
       if (utterance !== currentUtterance) {
         throw new Error('currentUtterance is not the same as utterance. There is a bug');
       }
     }
     utterance.onerror = (event) => {
       console.log('utterance.onerror', event);
+      setNewSpeechState('error');
     }
     utterance.onpause = (event) => {
       console.log('utterance.onpause', event);
+      setNewSpeechState('paused');
     }
     utterance.onresume = (event) => {
       console.log('utterance.onresume', event);
+      setNewSpeechState('speaking');
     }
     utterance.onend = () => {
       currentUtterance = undefined;
       currentSpeech = undefined;
       utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance ended');
       speechQueueUpdatedHandler?.(speechQueue, currentSpeech, 'speech ended');
+      if (utteranceQueue.length === 0) {
+        setNewSpeechState('idle');
+      }
     }
     addToQueue(utterance);
     synth.speak(utterance);
@@ -146,6 +172,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     currentSpeech = undefined;
     utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'all speech cancelled');
     speechQueueUpdatedHandler?.(speechQueue, currentSpeech, 'all speech cancelled');
+    setNewSpeechState('idle');
   }
 
   function getCurrentSpeech() {
@@ -166,6 +193,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
 
   function pause() {
     synth.pause();
+    setNewSpeechState('paused');
   }
 
   function resume() {
@@ -192,10 +220,12 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     setVoicesChangedListener,
     setUtteranceQueueUpdatedListener,
     setSpeechQueueUpdatedListener,
+    setSpeechStateChangedListener,
     getCurrentSpeech,
     getSpeechQueue,
     getCurrentUtterance,
     getUtteranceQueue,
+    getCurrentSpeechState,
     speechSynthesis: synth,
   }
 }
