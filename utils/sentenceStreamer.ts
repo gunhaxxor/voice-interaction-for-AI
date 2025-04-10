@@ -21,7 +21,10 @@ class SentenceTransformer implements Transformer<string, string> {
       const endIndex = sentenceEndRegex.lastIndex;
       const sentence = this.buffer.slice(0, endIndex);
       const cleaned = processText(sentence).trim();
-      if (cleaned) controller.enqueue(cleaned);
+      if (cleaned) {
+        console.log('processed sentence:', cleaned);
+        controller.enqueue(cleaned);
+      }
       this.buffer = this.buffer.slice(endIndex);
       sentenceEndRegex.lastIndex = 0;
     }
@@ -29,6 +32,7 @@ class SentenceTransformer implements Transformer<string, string> {
 
   flush(controller: TransformStreamDefaultController<string>) {
     const cleaned = processText(this.buffer).trim();
+    console.log('flush called. last processed sentence:', cleaned);
     if (cleaned) controller.enqueue(cleaned);
     this.buffer = '';
   }

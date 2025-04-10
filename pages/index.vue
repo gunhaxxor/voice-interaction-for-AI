@@ -80,7 +80,7 @@ const currentListenModeIcon = computed(() => {
 })
 
 const currentSpeechSynthText = ref('Tjenare');
-const webSpeech = new WebSpeechService({ lang: 'sv-SE', pitch: 5, rate: 1.7 });
+const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
 
 const speechIsPlaying = ref(false);
 webSpeech.onSpeechStateChanged((newSpeechState) => {
@@ -135,70 +135,39 @@ async function readNextSentencesLoop() {
     if (done) break;
     // speechQueue.value.push(sentence)
     // currentSpeechSynthText.value = sentence;
-    webSpeech.enqueueSpeech(sentence);
+    webSpeech.enqueueSpeech(sentence, {
+      // pitch: Math.random() * 2,
+      // rate: Math.random() * 4
+    });
   }
 }
 
-watch(() => messages.value.at(-1), (lastMessageNewValue, lastMessagePrevValue) => {
+watch([chatStatus, () => messages.value.at(-1)], ([newChatStatus, lastMessageNewValue], [prevChatStatus, lastMessagePrevValue]) => {
   if (!isDefined(lastMessageNewValue) || !isDefined(lastMessagePrevValue)) return;
   if (lastMessageNewValue.role !== 'assistant') return;
+
   // console.log('assistant message updated. new:', lastMessageNewValue.content, ' prev:', lastMessagePrevValue.content);
   if (lastMessageNewValue.id === lastMessagePrevValue.id) {
     const addedChars = lastMessageNewValue.content.substring(lastMessagePrevValue.content.length);
     // console.log(addedChars);
     wordWriter.write(addedChars);
-
-    // Add to sentence
-    // const lastSentence = speechQueue.value.at(-1); 
-    // speechQueue.value.at(-1) += addedChars;
+    if (chatStatus.value === 'ready') {
+      wordWriter.write('\n');
+    }
   } else {
     //Start new sentence
     console.log('new sentence');
     wordWriter.write(lastMessageNewValue.content);
-    // speechQueue.value.push(lastMessageNewValue.content);
   }
 
-  // console.log(newMessages[newMessages.length - 1].parts);
-  // console.log(prevMessages[newMessages.length - 1].parts);
 })
 
 const combinedInput = ref('')
-
-// watch(ListeningResultIsFinal, () => {
-//   if (ListeningResultIsFinal.value) {
-//     resultsAppended.value += ListeningResult.value
-//     input.value = resultsAppended.value
-//     if (currentListenMode.value === 'listenAndSend') {
-//       // handleSubmit();
-//       submit()
-//     }
-//   }
-// })
-
-// watch(ListeningResult, () => {
-//   if (isListening.value) {
-//     // input.value = ListeningResult.value;
-//     if(!ListeningResultIsFinal.value){
-//       input.value = resultsAppended.value + ListeningResult.value
-//     }
-//   }
-// })
 
 function submitChatInput() {
   combinedInput.value = ''
   handleSubmit()
 }
-
-// const img = useImage();
-// const imgUrl = '~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg';
-
-// const backgroundStyles = computed(() => {
-//   // const imgUrl = img('~/assets/ivan-bandura-2FEE6BR343k-unsplash.jpg');
-
-//   return {
-//     backgroundImage: `url(${bgUrl})`,
-//   }
-// })
 
 import type { CardProps } from '@nuxt/ui';
 const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
@@ -228,19 +197,13 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
     </div>
     <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
       <UCard :ui="cardUISettings" class="" variant="subtle">
-        <UCollapsible class="">
+        <UCollapsible class="" default-open="">
           <div class="">Listening status</div>
           <template #content>
 
             <div :class="debugPanelClasses">
               <p>Listening: </p>
               <p>{{ recognition.getListeningState() }}</p>
-              <!-- <p>Final: </p>
-              <p>{{ ListeningResultIsFinal }}</p> -->
-              <!-- <p>Error: </p>
-              <p>{{ ListeningError?.message }}</p> -->
-              <!-- <p>Result: </p>
-              <p>{{ ListeningResult }}</p> -->
               <p>ListenMode: </p>
               <p>{{ currentListenMode }}</p>
             </div>
@@ -291,7 +254,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <div v-html="message.parsedContent"></div>
+          <div class="prose dark:prose-invert" v-html="message.parsedContent"></div>
           <!-- <pre class="whitespace-pre-wrap">
             {{ message.content }}
           </pre> -->
@@ -328,14 +291,4 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
   </div>
 </template>
 
-<style lang="css" scoped>
-
-/* :global(body) {
-  background-color: oklch(from var(--ui-bg) L C H / 0.8);
-  background-image: v-bind(bgurl);
-  background-blend-mode: soft-light;
-  background-position: center;
-  background-attachment: fixed;
-}
-*/
-</style>
+<style lang="css" scoped></style>
