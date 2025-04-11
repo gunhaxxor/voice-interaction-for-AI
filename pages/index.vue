@@ -201,6 +201,13 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
   });
 })
 
+function testFunction() {
+  messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'end',
+  });
+}
+
 </script>
 
 <template>
@@ -249,9 +256,8 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
           </template>
         </UCollapsible>
       </UCard>
-      <UCard :ui="cardUISettings" class="max-h-80 overflow-y-scroll" variant="subtle">
+      <UCard :ui="cardUISettings" class="max-h-80 overflow-y-auto" variant="subtle">
         <UCollapsible>
-
           <div>Chat status</div>
           <template #content>
 
@@ -267,23 +273,22 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
           </template>
         </UCollapsible>
       </UCard>
+      <UButton @click="testFunction">Test</UButton>
     </div>
-    <div ref="messageContainer" class="grow overflow-y-scroll">
-
+    <div ref="messageContainer" class="grow overflow-y-scroll pb-12">
       <div class="w-xl mx-auto flex flex-col gap-4">
-
-        <div
+        <!-- <div
           v-for="(message, idx) in ['asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf',]"
-          class="p-4 border rounded-md backdrop-blur-md bg-(--ui-bg)/45"
+          class="p-4 border scroll-mb-10 rounded-md backdrop-blur-md bg-(--ui-bg)/45"
           :class="[idx % 2 === 0 ? 'self-end border-secondary-400 ml-10' : 'mr-10']">
           {{ message }}
-        </div>
-        <!-- <template v-for="message in parsedMessages" :key="message.id">
-        <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
-          :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
-          <div class="prose dark:prose-invert" v-html="message.parsedContent"></div>
-        </div>
-      </template> -->
+        </div> -->
+        <template v-for="message in parsedMessages" :key="message.id">
+          <div class="p-4 border scroll-mb-10 rounded-md backdrop-blur-md bg-(--ui-bg)/45"
+            :class="[message.role === 'user' ? 'self-end border-(--ui-primary) ml-10' : 'mr-10']">
+            <div class="prose dark:prose-invert" v-html="message.parsedContent"></div>
+          </div>
+        </template>
       </div>
     </div>
     <form class="shrink flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
@@ -308,6 +313,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <!-- <UButton @click="webSpeech.enqueueSpeech(writtenInput)">Speak</UButton> -->
       <UButton @click="webSpeech.pause()">Pause</UButton>
       <UButton @click="webSpeech.resume()">Resume</UButton>
+      <UButton>Button</UButton>
       <USwitch v-model="autoSpeak" label="Auto speak" />
       <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="webSpeech.cancel()">
       </UButton>

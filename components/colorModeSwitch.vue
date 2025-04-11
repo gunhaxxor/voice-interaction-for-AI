@@ -12,18 +12,14 @@ const isDark = computed({
 </script>
 
 <template>
-    <div class="absolute top-0 right-0 p-2" style="z-index: 100;">
-        <ClientOnly v-if="!colorMode?.forced">
-            <UButton
-            :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"
-            color="neutral"
-            variant="ghost"
-            @click="isDark = !isDark"
-            />
+  <div class="absolute top-0 right-4 p-2" style="z-index: 100;">
+    <ClientOnly v-if="!colorMode?.forced">
+      <UButton :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'" color="neutral" variant="ghost"
+        @click="isDark = !isDark" />
 
-            <template #fallback>
-            <div class="size-8" />
-            </template>
-        </ClientOnly>
-    </div>
+      <template #fallback>
+        <div class="size-8" />
+      </template>
+    </ClientOnly>
+  </div>
 </template>
