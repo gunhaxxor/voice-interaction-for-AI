@@ -1,5 +1,6 @@
 import { assert, describe, expect, test, vi } from "vitest";
 import { type STTService, MockSTTService } from "@/utils/recognitionService";
+import { manuscript } from './testManuscript'
 
 describe('MockSTTService', () => {
   test('can initialize', () => {
@@ -20,39 +21,27 @@ describe('MockSTTService', () => {
     sttService.onTextReceived(() => { });
   })
   test('receives events if event listener added and startListenAudio', async () => {
-    const mocklistener = vi.fn((text: string) => {
-      // console.log(text);
-    });
-    const sttService = new MockSTTService();
+    const mocklistener = vi.fn();
+    const sttService = new MockSTTService(['Hello!']);
     sttService.onTextReceived(mocklistener);
     sttService.startListenAudio();
     await vi.waitUntil(() => mocklistener.mock.calls.length > 0, { timeout: 3000 });
-    // mocklistener('asdf');
-    // console.log(mocklistener.mock.calls.length);
     assert(mocklistener.mock.lastCall?.at(0) === 'Hello!', 'expected last call to be "Hello!"');
   })
   test('doesnt receive event if stopListenAudio', async () => {
-    const mocklistener = vi.fn((text: string) => {
-      // console.log(text);
-    });
+    const mocklistener = vi.fn();
     const sttService = new MockSTTService();
     sttService.startListenAudio();
     sttService.stopListenAudio()
     sttService.onTextReceived(mocklistener);
     await vi.waitUntil(() => mocklistener.mock.calls.length === 0, { timeout: 40 });
-    // mocklistener('asdf');
-    // console.log(mocklistener.mock.calls.length);
   })
   test('doesnt trigger listener if listener is removed', async () => {
-    const mocklistener = vi.fn((text: string) => {
-      // console.log(text);
-    });
+    const mocklistener = vi.fn();
     const sttService = new MockSTTService();
     sttService.startListenAudio();
     sttService.onTextReceived(mocklistener);
     sttService.onTextReceived(undefined);
     await vi.waitUntil(() => mocklistener.mock.calls.length === 0, { timeout: 40 });
-    // mocklistener('asdf');
-    // console.log(mocklistener.mock.calls.length);
   })
 })
