@@ -187,7 +187,7 @@ function submitChatInput() {
 }
 
 import type { CardProps } from '@nuxt/ui';
-const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-lg ring-neutral-500/35' }
+const cardUISettings: CardProps['ui'] = { body: 'p-3 sm:p-3', header: 'p-3 sm:p-3', root: 'backdrop-blur-xl bg-transparent ring-neutral-500/35' }
 const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(--ui-border) gap-x-2 *:even:font-bold *:odd:text-sm'
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
@@ -206,14 +206,15 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 <template>
 
   <div class="h-screen overflow-clip flex flex-col items-stretch">
-    <!-- <ColorModeSwitch /> -->
+    <ColorModeSwitch />
     <div class="fixed w-screen h-screen -z-10">
       <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
-        class="object-cover w-full h-full brightness-50 ">
+        class="object-cover w-full h-full brightness-30 light:invert-100">
       </video>
+      <div class="absolute inset-0 bg-(--ui-bg)/30"></div>
     </div>
     <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
-      <UCard :ui="cardUISettings" class="" variant="subtle">
+      <UCard :ui="cardUISettings" class="" variant="outline">
         <UCollapsible class="" default-open="">
           <div class="">Listening status</div>
           <template #content>
@@ -273,8 +274,8 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
         <div
           v-for="(message, idx) in ['asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf',]"
-          class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
-          :class="[idx % 2 === 0 ? 'self-end border-amber-400 ml-10' : 'mr-10']">
+          class="p-4 border rounded-md backdrop-blur-md bg-(--ui-bg)/45"
+          :class="[idx % 2 === 0 ? 'self-end border-secondary-400 ml-10' : 'mr-10']">
           {{ message }}
         </div>
         <!-- <template v-for="message in parsedMessages" :key="message.id">
