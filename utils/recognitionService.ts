@@ -3,14 +3,17 @@ interface STTServiceListenOptions {
 }
 
 type ListeningState = 'listening' | 'inactive';
+type InputSpeechState = 'speaking' | 'idle';
 export interface STTService {
   startListenAudio(options?: STTServiceListenOptions): Promise<void>;
   stopListenAudio(): void;
   getListeningState(): ListeningState;
+  getInputSpeechState(): InputSpeechState;
   // getTranscript(): string;
   onListeningStateChanged(handler?: ((state: ListeningState) => void)): void;
   onTextReceived(handler?: ((text: string) => void)): void;
   onInterimTextReceived(handler?: ((text: string) => void)): void;
+  onInputSpeechStateChanged(handler?: ((state: 'speaking' | 'idle') => void)): void;
   // removeTextReceivedListener(listener: (text: string) => void): void;
 }
 
@@ -26,6 +29,11 @@ export class WebRecognitionService implements STTService {
       throw new Error('Speech Recognition is not supported in this browser');
     }
     this.recognition = new SpeechRecognition();
+  }
+  private inputSpeechState: InputSpeechState = 'idle';
+  private setInputSpeechState(state: InputSpeechState): void {
+    this.inputSpeechState = state;
+    this.speechStateChangedHandler?.(state);
   }
   async startListenAudio(options?: STTServiceListenOptions) {
     this.listeningTargetState = 'listening';
@@ -44,6 +52,12 @@ export class WebRecognitionService implements STTService {
         this.interimTextReceivedHandler?.(text);
       }
     }
+    this.recognition.onspeechstart = () => {
+      this.setInputSpeechState('speaking');
+    }
+    this.recognition.onspeechend = () => {
+      this.setInputSpeechState('idle');
+    }
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.recognition.onstart = () => {
       // console.log('recognition listen started');
@@ -55,7 +69,9 @@ export class WebRecognitionService implements STTService {
       if (this.listeningTargetState === 'listening') {
         console.warn('recognition listen ended by browser, will try start it again');
         this.recognition.start();
+        return;
       }
+      this.inputSpeechState = 'idle';
     }
     return promise;
   }
@@ -68,6 +84,10 @@ export class WebRecognitionService implements STTService {
   private listeningState: ListeningState = 'inactive';
   getListeningState(): ListeningState {
     return this.listeningState;
+  }
+
+  getInputSpeechState(): InputSpeechState {
+    return this.inputSpeechState;
   }
 
   private listeningStateChangedHandler?: (state: ListeningState) => void;
@@ -88,6 +108,12 @@ export class WebRecognitionService implements STTService {
   onInterimTextReceived(handler?: ((text: string) => void)): void {
     this.interimTextReceivedHandler = handler;
   }
+
+  private speechStateChangedHandler?: (state: InputSpeechState) => void;
+  onInputSpeechStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
+    this.speechStateChangedHandler = handler;
+  }
+
 }
 
 export class MockSTTService implements STTService {

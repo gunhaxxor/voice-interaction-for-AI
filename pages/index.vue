@@ -37,6 +37,13 @@ const recognitionIsListening = ref(false);
 recognition.onListeningStateChanged((state) => {
   recognitionIsListening.value = state === 'listening' ? true : false;
 })
+const userIsSpeaking = ref(false);
+recognition.onInputSpeechStateChanged((state) => {
+  userIsSpeaking.value = state === 'speaking' ? true : false;
+  if (state === 'speaking') {
+    webSpeech.cancel();
+  }
+})
 // const currentTranscript = ref('');
 recognition.onTextReceived((text) => {
   writtenInput.value = text;
@@ -79,12 +86,19 @@ const currentListenModeIcon = computed(() => {
   }
 })
 
-const currentSpeechSynthText = ref('Tjenare');
 const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
 
 const speechIsPlaying = ref(false);
 webSpeech.onSpeechStateChanged((newSpeechState) => {
   speechIsPlaying.value = newSpeechState === 'speaking' ? true : false;
+})
+
+const speechQueue = ref<string[]>([]);
+const currentSpeech = ref<string>();
+webSpeech.onSpeechQueueUpdated((pendingSpeech, newCurrentSpeech, reason) => {
+  console.log('speechQueue updated', newCurrentSpeech, pendingSpeech);
+  speechQueue.value = [...pendingSpeech];
+  currentSpeech.value = newCurrentSpeech;
 })
 const autoSpeak = ref(false);
 const toggleAutoSpeak = useToggle(autoSpeak);
@@ -114,7 +128,6 @@ watch(chatData, () => {
 })
 
 
-const speechQueue = ref<string[]>([]);
 
 const sentenceTransformer = sentenceStreamer();
 const wordWriter = sentenceTransformer.writable.getWriter();
@@ -223,10 +236,10 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
               <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p> -->
               <!-- <p>Status: </p>
               <p>{{ speechStatus }}</p> -->
-              <!-- <p>Utterance: </p>
-              <p>{{ utterance.text }}</p> -->
               <p>Current Text: </p>
-              <p>{{ currentSpeechSynthText }}</p>
+              <p>{{ currentSpeech }}</p>
+              <p>Queue: </p>
+              <p>{{ speechQueue }}</p>
             </div>
           </template>
         </UCollapsible>
