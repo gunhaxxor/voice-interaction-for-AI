@@ -41,6 +41,7 @@ const userIsSpeaking = ref(false);
 recognition.onInputSpeechStateChanged((state) => {
   userIsSpeaking.value = state === 'speaking' ? true : false;
   if (state === 'speaking') {
+    console.log('started speaking. Will cancel speechService');
     webSpeech.cancel();
   }
 })
@@ -88,6 +89,9 @@ const currentListenModeIcon = computed(() => {
 
 const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
 
+const autoSpeak = ref(true);
+// const toggleAutoSpeak = useToggle(autoSpeak);
+
 const speechIsPlaying = ref(false);
 webSpeech.onSpeechStateChanged((newSpeechState) => {
   speechIsPlaying.value = newSpeechState === 'speaking' ? true : false;
@@ -100,8 +104,6 @@ webSpeech.onSpeechQueueUpdated((pendingSpeech, newCurrentSpeech, reason) => {
   speechQueue.value = [...pendingSpeech];
   currentSpeech.value = newCurrentSpeech;
 })
-const autoSpeak = ref(false);
-const toggleAutoSpeak = useToggle(autoSpeak);
 
 const { messages, input: writtenInput, handleSubmit, status: chatStatus, data: chatData } = useChat()
 const parsedMessages = computed(() => {
@@ -148,10 +150,12 @@ async function readNextSentencesLoop() {
     if (done) break;
     // speechQueue.value.push(sentence)
     // currentSpeechSynthText.value = sentence;
-    webSpeech.enqueueSpeech(sentence, {
-      // pitch: Math.random() * 2,
-      // rate: Math.random() * 4
-    });
+    if (autoSpeak.value) {
+      webSpeech.enqueueSpeech(sentence, {
+        // pitch: Math.random() * 2,
+        // rate: Math.random() * 4
+      });
+    }
   }
 }
 
@@ -201,9 +205,9 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
 
 <template>
 
-  <div class="w-screen h-screen flex flex-col">
-    <ColorModeSwitch />
-    <div class="fixed w-screen h-screen">
+  <div class="h-screen overflow-clip flex flex-col items-stretch">
+    <!-- <ColorModeSwitch /> -->
+    <div class="fixed w-screen h-screen -z-10">
       <video :src="currentVideoUrl" ref="backgroundVideo" muted autoplay
         class="object-cover w-full h-full brightness-50 ">
       </video>
@@ -263,19 +267,25 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
         </UCollapsible>
       </UCard>
     </div>
-    <div ref="messageContainer" class="flex flex-col w-full max-w-2xl gap-4 p-6 mx-auto pb-24">
-      <template v-for="message in parsedMessages" :key="message.id">
+    <div ref="messageContainer" class="grow overflow-y-scroll">
+
+      <div class="w-xl mx-auto flex flex-col gap-4">
+
+        <div
+          v-for="(message, idx) in ['asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf',]"
+          class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
+          :class="[idx % 2 === 0 ? 'self-end border-amber-400 ml-10' : 'mr-10']">
+          {{ message }}
+        </div>
+        <!-- <template v-for="message in parsedMessages" :key="message.id">
         <div class="p-4 border rounded-md backdrop-blur-md bg-neutral-950/45"
           :class="[message.role === 'user' ? 'self-end border-amber-400 ml-10' : 'mr-10']">
           <div class="prose dark:prose-invert" v-html="message.parsedContent"></div>
-          <!-- <pre class="whitespace-pre-wrap">
-            {{ message.content }}
-          </pre> -->
         </div>
-      </template>
+      </template> -->
+      </div>
     </div>
-    <form
-      class="fixed bottom-0 flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
+    <form class="shrink flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
       @submit.prevent="submitChatInput">
       <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
         @click="nextVideoUrl()"></UButton>
@@ -297,6 +307,7 @@ watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
       <!-- <UButton @click="webSpeech.enqueueSpeech(writtenInput)">Speak</UButton> -->
       <UButton @click="webSpeech.pause()">Pause</UButton>
       <UButton @click="webSpeech.resume()">Resume</UButton>
+      <USwitch v-model="autoSpeak" label="Auto speak" />
       <UButton size="xl" class="rounded-full" icon="i-material-symbols-voice-over-off" @click="webSpeech.cancel()">
       </UButton>
       <div class="grow"></div>
