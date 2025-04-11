@@ -291,7 +291,8 @@ function testFunction() {
         </template>
       </div>
     </div>
-    <form class="shrink flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 ring-(--ui-border)"
+    <form
+      class="shrink flex items-end justify-center w-full gap-2 p-4 backdrop-blur-lg ring-1 bg-(--ui-bg)/20 ring-(--ui-border-muted)"
       @submit.prevent="submitChatInput">
       <UButton size="xl" class="rounded-full" color="neutral" variant="subtle" icon="i-lucide-image"
         @click="nextVideoUrl()"></UButton>
@@ -299,7 +300,7 @@ function testFunction() {
       <p class="mb-2">
         <UKbd>CTRL</UKbd>+<UKbd>ENTER</UKbd> to submit:
       </p>
-      <UTextarea ref="chatInput" variant="soft" @keydown.ctrl.enter="submitChatInput" :ui="{ base: 'resize-none' }"
+      <UTextarea ref="chatInput" variant="subtle" @keydown.ctrl.enter="submitChatInput" :ui="{ base: 'resize-none' }"
         class="w-full max-w-md" size="xl" autoresize :rows="1" :maxrows="10" v-model="writtenInput"
         @update:model-value="combinedInput = writtenInput">
       </UTextarea>
