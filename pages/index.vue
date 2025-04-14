@@ -225,7 +225,6 @@ function testFunction() {
         <UCollapsible class="" default-open="">
           <div class="">Listening status</div>
           <template #content>
-
             <div :class="debugPanelClasses">
               <p>Listening: </p>
               <p>{{ recognition.getListeningState() }}</p>
@@ -238,14 +237,14 @@ function testFunction() {
       <UCard :ui="cardUISettings" class="" variant="subtle">
         <UCollapsible class="" default-open>
           <div>Synthesis status</div>
-
           <template #content>
-
             <div :class="debugPanelClasses">
               <p>Playing: </p>
               <p>{{ speechIsPlaying }}</p>
-              <!-- <p>Error: </p>
-              <p :class="{ 'invisible': !speechError }">{{ speechError?.error }}</p> -->
+              <div class="contents" :class="{ 'invisible': !speechError }">
+                <p>Error: </p>
+                <p>{{ webSpeech }}</p>
+              </div>
               <!-- <p>Status: </p>
               <p>{{ speechStatus }}</p> -->
               <p>Current Text: </p>
@@ -260,15 +259,9 @@ function testFunction() {
         <UCollapsible>
           <div>Chat status</div>
           <template #content>
-
             <div :class="debugPanelClasses">
               <p>status: </p>
               <p>{{ chatStatus }}</p>
-              <!-- <p>data: </p>
-          <p>{{ chatData }}</p> -->
-              <p>speechqueue: </p>
-              <p>{{ speechQueue }}</p>
-              <!-- <p>{{ currentVideoUrl }}</p> -->
             </div>
           </template>
         </UCollapsible>
@@ -277,12 +270,6 @@ function testFunction() {
     </div>
     <div id="message-container" ref="messageContainer" class="grow overflow-y-scroll py-12">
       <div class="w-xl mx-auto flex flex-col gap-4">
-        <!-- <div
-          v-for="(message, idx) in ['asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf',]"
-          class="p-4 border scroll-mb-10 rounded-md backdrop-blur-md bg-(--ui-bg)/45"
-          :class="[idx % 2 === 0 ? 'self-end border-secondary-400 ml-10' : 'mr-10']">
-          {{ message }}
-        </div> -->
         <template v-for="message in parsedMessages" :key="message.id">
           <div class="p-4 border scroll-mb-10 rounded-md backdrop-blur-md bg-(--ui-bg)/45"
             :class="[message.role === 'user' ? 'self-end border-(--ui-primary) ml-10' : 'mr-10']">

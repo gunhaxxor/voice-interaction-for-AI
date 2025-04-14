@@ -5,6 +5,7 @@ interface STTServiceListenOptions {
 type ListeningState = 'listening' | 'inactive';
 type InputSpeechState = 'speaking' | 'idle';
 export interface STTService {
+  onError(errorHandler: (error: Error) => void): void;
   startListenAudio(options?: STTServiceListenOptions): Promise<void>;
   stopListenAudio(): void;
   getListeningState(): ListeningState;
@@ -29,6 +30,18 @@ export class WebRecognitionService implements STTService {
       throw new Error('Speech Recognition is not supported in this browser');
     }
     this.recognition = new SpeechRecognition();
+  }
+  private errorHandler?: (error: Error) => void;
+  onError(errorHandler: (error: Error) => void): void {
+    this.errorHandler = errorHandler;
+    this.recognition.onerror = (event) => {
+      const error = new Error(`Speech Recognition error (${event.error}): ` + event.message);
+      if (!this.errorHandler) {
+        console.error('No recognition errorhandler set, Speech Recognition error', error);
+      } else {
+        this.errorHandler?.(error);
+      }
+    };
   }
   private inputSpeechState: InputSpeechState = 'idle';
   private setInputSpeechState(state: InputSpeechState): void {
