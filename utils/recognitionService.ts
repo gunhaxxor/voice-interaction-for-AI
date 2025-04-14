@@ -1,4 +1,4 @@
-interface STTServiceListenOptions {
+export interface STTServiceListenOptions {
   lang?: PossibleLanguages
 }
 
@@ -49,7 +49,7 @@ export class WebRecognitionService implements STTService {
   private inputSpeechState: InputSpeechState = 'idle';
   private setInputSpeechState(state: InputSpeechState): void {
     this.inputSpeechState = state;
-    this.speechStateChangedHandler?.(state);
+    this.inputSpeechStateChangedHandler?.(state);
   }
   async startListenAudio(options?: STTServiceListenOptions) {
     this.listeningTargetState = 'listening';
@@ -125,9 +125,9 @@ export class WebRecognitionService implements STTService {
     this.interimTextReceivedHandler = handler;
   }
 
-  private speechStateChangedHandler?: (state: InputSpeechState) => void;
+  private inputSpeechStateChangedHandler?: (state: InputSpeechState) => void;
   onInputSpeechStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
-    this.speechStateChangedHandler = handler;
+    this.inputSpeechStateChangedHandler = handler;
   }
 
 }

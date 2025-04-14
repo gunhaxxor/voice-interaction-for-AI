@@ -19,6 +19,7 @@
     "@nuxt/image": "1.10.0",
     "@nuxt/scripts": "0.11.2",
     "@nuxt/ui": "3.0.2",
+    "@ricky0123/vad-web": "^0.0.22",
     "@vueuse/nuxt": "13.0.0",
     "ai": "^4.2.0",
     "eslint": "^9.0.0",

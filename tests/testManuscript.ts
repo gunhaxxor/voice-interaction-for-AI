@@ -6,3 +6,7 @@ export const manuscript = [
   'I like big butts and I cannot lie',
   'How about next year?'
 ]
+
+export function getRandomSentence() {
+  return manuscript[Math.floor(Math.random() * manuscript.length)];
+}
