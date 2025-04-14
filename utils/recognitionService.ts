@@ -143,6 +143,10 @@ export class MockSTTService implements STTService {
       this.manuscript = manuscript;
     }
   }
+  private errorHandler?: (error: Error) => void;
+  onError(errorHandler: (error: Error) => void): void {
+    this.errorHandler = errorHandler;
+  }
   private currentInterval = 0;
   async startListenAudio() {
     console.log('startListening audio');

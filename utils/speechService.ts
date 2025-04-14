@@ -92,6 +92,11 @@ export class MockTTSServiceImpl implements TTSService{
 
   } 
   
+  private errorHandler?: (error: Error) => void
+  onError(errorHandler: (error: Error) => void): void {
+    this.errorHandler = errorHandler;
+  }
+
   private setNewSpeechState(newSpeechState: SpeechState): void {
     const prevSpeechState = this.speechState;
     this.speechState = newSpeechState;
