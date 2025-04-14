@@ -24,7 +24,7 @@ describe('sentenceStreamer', () => {
     // console.log(expectedSentences);
     expect(readArr).toEqual(expectedSentences);
   })
-  test('reads till end if isnt closed', async () => {
+  test('reads most recent sentence if isnt closed', async () => {
     const transformer = sentenceStreamer();
     const writer = transformer.writable.getWriter();
     const reader = transformer.readable.getReader();
