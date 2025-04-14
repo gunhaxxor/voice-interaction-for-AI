@@ -275,7 +275,7 @@ function testFunction() {
       </UCard>
       <!-- <UButton @click="testFunction">Test</UButton> -->
     </div>
-    <div ref="messageContainer" class="grow overflow-y-scroll pb-12">
+    <div id="message-container" ref="messageContainer" class="grow overflow-y-scroll py-12">
       <div class="w-xl mx-auto flex flex-col gap-4">
         <!-- <div
           v-for="(message, idx) in ['asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf', 'asd;lfkjasdf', 'asdfasdfasdf', 'asdfasdfasdfasdfasdf', 'asdfasdfasdfasdfasdfasdfasdf',]"
