@@ -1,6 +1,8 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
 import { type STTService, type STTServiceListenOptions } from "./recognitionService";
 import { MicVAD, utils } from '@ricky0123/vad-web';
+import OpenAI from 'openai';
+import { toFile } from 'openai/uploads';
 
 
 import { getRandomSentence } from '@/tests/testManuscript'
@@ -13,6 +15,7 @@ export interface WhisperRecognitionServiceOptions {
 export class WhisperRecognitionService implements STTService {
   private options:WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
+  private openai: OpenAI;
 
   constructor(options?: WhisperRecognitionServiceOptions){
     const defaultOptions: WhisperRecognitionServiceOptions = {
@@ -20,13 +23,29 @@ export class WhisperRecognitionService implements STTService {
       key: 'nokeyset',
     }
     this.options = {...defaultOptions, ...options}
+
+    this.openai = new OpenAI({
+      dangerouslyAllowBrowser: true,
+      apiKey: this.options.key,
+      baseURL: 'http://localhost:8000/v1',
+    })
   }
   
-  private VADonSpeechEndHandler = (audio: Float32Array<ArrayBufferLike>) => {
-    this.textReceivedHandler?.(getRandomSentence());
+  private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
+    const wavBuffer = utils.encodeWAV(audio);
+
+    // const audioB64 = utils.arrayBufferToBase64(wavBuffer);
+    // console.log(audioB64);
+    const file = await toFile(wavBuffer);
+    const text = await this.openai.audio.transcriptions.create({
+      model: 'KBLab/kb-whisper-medium',
+      file,
+    })
+    this.textReceivedHandler?.(text.text);
+  // this.textReceivedHandler?.(getRandomSentence());
   }
   private VADonFramesProcessedHandler = (probs: SpeechProbabilities, frame: Float32Array<ArrayBufferLike>) => {
-    console.log('vad frame processed. speech prob:', probs.isSpeech);
+    // console.log('vad frame processed. speech prob:', probs.isSpeech);
     if(!this.vad) return;
     if (probs.isSpeech > this.vad?.options.positiveSpeechThreshold) {
       this.setInputSpeechState('speaking');
@@ -37,7 +56,7 @@ export class WhisperRecognitionService implements STTService {
   async startListenAudio(options?: STTServiceListenOptions){
     this.vad = await MicVAD.new({
       model: 'v5',
-      frameSamples: 512,
+      frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs
       // frames to wait before triggering endSpeech
       redemptionFrames: 6,
       minSpeechFrames: 2,

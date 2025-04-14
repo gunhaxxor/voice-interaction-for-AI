@@ -16,4 +16,9 @@ export default defineNuxtConfig({
     openaiApiKey: process.env.OPENAI_API_KEY
   },
   ssr: false,
+  // devServer: {
+  //   cors: {
+  //     origin: '*'
+  //   }
+  // }
 })
