@@ -4,10 +4,13 @@ interface STTServiceListenOptions {
 
 type ListeningState = 'listening' | 'inactive';
 type InputSpeechState = 'speaking' | 'idle';
+type VADState = 'unset' | 'voiceIsInactive' | 'voiceIsActive';
 export interface STTService {
   onError(errorHandler: (error: Error) => void): void;
   startListenAudio(options?: STTServiceListenOptions): Promise<void>;
   stopListenAudio(): void;
+  setVADOverride?(state: VADState): void;
+  releaseVADOverride?(): void;
   getListeningState(): ListeningState;
   getInputSpeechState(): InputSpeechState;
   // getTranscript(): string;
