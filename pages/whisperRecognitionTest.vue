@@ -1,15 +1,15 @@
 <template>
   <div class="m-48">
-    <UButton @click="start">Start</UButton>
+    <USwitch v-model="listeningToggleState" label="Start/Stop" />
     <p>{{ listening ? 'Listening' : 'Not listening' }}</p>
     <p>{{ speaking ? 'Speaking' : 'Not speaking' }}</p>
-    <p>Latest transcript: {{ }}</p>
     <div>
+      <p class="font-bold">Current transcript: {{ currentTranscript }}</p>
       <p>
         History:
       </p>
-      <p v-for="historyRecord in history">
-        {{ historyRecord.snapshot }}
+      <p v-for="transcript in previousTranscripts">
+        {{ transcript }}
       </p>
     </div>
   </div>
@@ -17,17 +17,34 @@
 
 <script lang="ts" setup>
 
-const whisperRecogniton = new WhisperRecognitionService();
+const whisperRecogniton = new WhisperRecognitionService({
+  lang: 'sv'
+});
 
-const latestTranscript = ref('');
-const { history } = useRefHistory(latestTranscript);
+const currentTranscript = ref('');
+// const { history } = useRefHistory(latestTranscript);
+const previousTranscripts = ref<string[]>([]);
 whisperRecogniton.onTextReceived((text) => {
-  latestTranscript.value = text;
+  previousTranscripts.value.unshift(text);
+  currentTranscript.value = '';
+})
+whisperRecogniton.onInterimTextReceived((text) => {
+  console.log('interim text: ', text);
+  currentTranscript.value = text;
 })
 
-function start() {
-  whisperRecogniton.startListenAudio();
-}
+const listeningToggleState = computed<boolean>({
+  get() {
+    return listening.value;
+  },
+  set(listenValue) {
+    if (!listening.value) {
+      whisperRecogniton.startListenAudio()
+    } else {
+      whisperRecogniton.stopListenAudio();
+    }
+  }
+})
 
 const listening = ref(false);
 whisperRecogniton.onListeningStateChanged((state) => {

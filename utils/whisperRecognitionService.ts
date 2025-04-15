@@ -4,12 +4,9 @@ import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
 
-
-import { getRandomSentence } from '@/tests/testManuscript'
-
-export interface WhisperRecognitionServiceOptions {
-  url: string,
-  key: string,
+export interface WhisperRecognitionServiceOptions extends STTServiceListenOptions {
+  url?: string,
+  key?: string,
 }
 
 export class WhisperRecognitionService implements STTService {
@@ -34,18 +31,30 @@ export class WhisperRecognitionService implements STTService {
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     const wavBuffer = utils.encodeWAV(audio);
 
-    // const audioB64 = utils.arrayBufferToBase64(wavBuffer);
-    // console.log(audioB64);
     const file = await toFile(wavBuffer);
     const text = await this.openai.audio.transcriptions.create({
       model: 'KBLab/kb-whisper-medium',
       file,
+      stream: true,
+      language: this.options.lang
     })
-    this.textReceivedHandler?.(text.text);
-  // this.textReceivedHandler?.(getRandomSentence());
+    for await (const chunk of text) {
+      if (chunk.type === 'transcript.text.delta') {
+        console.log('delta transcript received');
+        this.interimTextReceivedHandler?.(chunk.delta);
+      } else {
+        this.textReceivedHandler?.(chunk.text);
+      }
+    }
   }
+  // private interimRawAudio: Array<number> = [];
+  // private framesThreshold = utils.minFramesForTargetMS(3000, 512, 16000);
   private VADonFramesProcessedHandler = (probs: SpeechProbabilities, frame: Float32Array<ArrayBufferLike>) => {
-    // console.log('vad frame processed. speech prob:', probs.isSpeech);
+    // for(let i = 0; i < frame.length; i++){
+    //   const val = frame[i];
+    //   this.interimRawAudio.push(val);
+    // }
+
     if(!this.vad) return;
     if (probs.isSpeech > this.vad?.options.positiveSpeechThreshold) {
       this.setInputSpeechState('speaking');
