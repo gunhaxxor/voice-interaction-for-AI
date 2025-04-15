@@ -7,6 +7,7 @@ import { toFile } from 'openai/uploads';
 export interface WhisperRecognitionServiceOptions extends STTServiceListenOptions {
   url?: string,
   key?: string,
+  lang?: PossibleLanguagesISO6391
 }
 
 export class WhisperRecognitionService implements STTService {
@@ -24,7 +25,7 @@ export class WhisperRecognitionService implements STTService {
     this.openai = new OpenAI({
       dangerouslyAllowBrowser: true,
       apiKey: this.options.key,
-      baseURL: 'http://localhost:8000/v1',
+      baseURL: this.options.url,
     })
   }
   

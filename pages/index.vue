@@ -30,9 +30,13 @@ onStartTyping(() => {
   }
 })
 
-const recognition = new WebRecognitionService({
-  lang: 'sv-SE',
+const recognition = new WhisperRecognitionService({
+  url: 'http://localhost:8000/v1/',
+  lang: 'sv',
 })
+// const recognition = new WebRecognitionService({
+//   lang: 'sv-SE',
+// })
 const recognitionIsListening = ref(false);
 recognition.onListeningStateChanged((state) => {
   recognitionIsListening.value = state === 'listening' ? true : false;
@@ -222,7 +226,7 @@ function testFunction() {
     </div>
     <div class="fixed top-0 left-0 flex flex-col gap-2 p-2 w-64">
       <UCard :ui="cardUISettings" class="" variant="outline">
-        <UCollapsible class="" default-open="">
+        <UCollapsible class="" default-open>
           <div class="">Listening status</div>
           <template #content>
             <div :class="debugPanelClasses">
@@ -241,10 +245,10 @@ function testFunction() {
             <div :class="debugPanelClasses">
               <p>Playing: </p>
               <p>{{ speechIsPlaying }}</p>
-              <div class="contents" :class="{ 'invisible': !speechError }">
+              <!-- <div class="contents" :class="{ 'invisible': !speechError }">
                 <p>Error: </p>
                 <p>{{ webSpeech }}</p>
-              </div>
+              </div> -->
               <!-- <p>Status: </p>
               <p>{{ speechStatus }}</p> -->
               <p>Current Text: </p>

@@ -1,5 +1,6 @@
 
-export type PossibleLanguages = 'en-US' | 'en-GB'| 'sv-SE' | (string & {})
+export type PossibleLanguagesBCP47 = 'en-US' | 'en-GB' | 'sv-SE' | (string & {})
+export type PossibleLanguagesISO6391 = 'en' | 'sv' | (string & {})
 
 export type MaybeHandler<T extends Array<unknown>> = undefined | ((...args: T) => void)
 
