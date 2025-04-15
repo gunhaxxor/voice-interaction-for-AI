@@ -11,16 +11,21 @@ export interface WhisperRecognitionServiceOptions extends STTServiceListenOption
 }
 
 export class WhisperRecognitionService implements STTService {
-  private options:WhisperRecognitionServiceOptions;
+  private options?: WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
 
-  constructor(options?: WhisperRecognitionServiceOptions){
+  constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
+    if (options instanceof OpenAI) {
+      this.openai = options;
+      return;
+    }
+
     const defaultOptions: WhisperRecognitionServiceOptions = {
-      url: 'https://api.openai.com/v1/audio/transcriptions',
+      url: 'https://api.openai.com/v1/',
       key: 'nokeyset',
     }
-    this.options = {...defaultOptions, ...options}
+    this.options = { ...defaultOptions, ...options }
 
     this.openai = new OpenAI({
       dangerouslyAllowBrowser: true,

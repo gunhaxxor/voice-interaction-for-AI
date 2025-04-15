@@ -1,7 +1,7 @@
 
 export type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
-interface TTSServiceSpeechOptions {
-  lang?: PossibleLanguages,
+export interface TTSServiceSpeechOptions {
+  lang?: PossibleLanguagesBCP47,
   speed?: number
   pitch?: number
 }
