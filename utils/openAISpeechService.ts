@@ -76,7 +76,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
       if (firstInQueue?.requestState === 'resolved') {
         this.pluckAndStartNextSpeech();
       } else if (firstInQueue?.requestPromise) {
-        console.warn('next speechRecord was not resolved yet, will await its finish for plucking it');
+        console.warn('next speechRecord was not resolved yet, will await its finish before plucking it');
         firstInQueue?.requestPromise.finally(() => this.pluckAndStartNextSpeech());
       }
     })

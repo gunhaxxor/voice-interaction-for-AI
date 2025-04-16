@@ -12,10 +12,10 @@
 <script lang="ts" setup>
 import OpenAI from 'openai';
 
-import { getRandomSentence } from '@/tests/testManuscript'
+import { getRandomSwedishSentence } from '@/tests/testManuscript'
 
 function sendSpeechAndPickNewRandomSentence() {
-  inputText.value = getRandomSentence();
+  inputText.value = getRandomSwedishSentence();
   speech.enqueueSpeech(inputText.value);
 }
   
