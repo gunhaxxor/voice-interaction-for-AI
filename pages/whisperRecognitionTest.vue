@@ -18,6 +18,8 @@
 <script lang="ts" setup>
 
 const whisperRecogniton = new WhisperRecognitionService({
+  url: 'http://localhost:8000/v1',
+  key: 'speaches',
   lang: 'sv'
 });
 
