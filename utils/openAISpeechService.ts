@@ -38,6 +38,19 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     return this.currentSpeech?.text;
   }
 
+  speakDirectly(text: string, options?: TTSServiceSpeechOptions): void {
+    this.cancel();
+    this.enqueueSpeech(text, options);
+  }
+
+  cancel(): void {
+    this.currentSpeech?.audio?.pause();
+    this.currentSpeech?.audio?.remove();
+    this.currentSpeech = undefined;
+    this.speechQueue.length = 0;
+    this.setSpeechState('idle');
+  }
+
   pause(): void {
     this.currentSpeech?.audio?.pause();
     this.setSpeechState('paused');

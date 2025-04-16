@@ -1,10 +1,12 @@
 <template>
   <div class="m-36">
-    <form @submit.prevent="speech.enqueueSpeech(inputText)">
+    <form class="flex gap-2" @submit.prevent="speech.enqueueSpeech(inputText)">
       <UInput v-model="inputText" />
       <UButton type="submit">Add to speech queue</UButton>
       <!-- <USeparator orientation="vertical" /> -->
       <UButton @click="sendSpeechAndPickNewRandomSentence()">Add random to speech queue</UButton>
+      <UButton color="error" @click="speech.cancel()">Clear queue</UButton>
+      <UButton color="secondary" @click="speech.speakDirectly(inputText)">Speak now!</UButton>
     </form>
     <div>
       <pre>{{ speechState }}</pre>
