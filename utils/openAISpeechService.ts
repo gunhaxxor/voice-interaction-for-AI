@@ -30,6 +30,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     this.openai = new OpenAI({
       baseURL: options.baseUrl?? 'https://api.openai.com/v1',
       apiKey: options.apiKey,
+      dangerouslyAllowBrowser: true,
     });
   }
   

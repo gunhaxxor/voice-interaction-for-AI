@@ -91,7 +91,12 @@ const currentListenModeIcon = computed(() => {
   }
 })
 
-const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
+// const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
+const webSpeech = new OpenAISpeechService({
+  baseUrl: 'http://localhost:8000/v1',
+  apiKey: 'ollama',
+  lang: 'sv',
+});
 
 const autoSpeak = ref(true);
 // const toggleAutoSpeak = useToggle(autoSpeak);
@@ -145,6 +150,10 @@ onMounted(() => {
   readNextSentencesLoop();
 })
 
+onUnmounted(() => {
+  webSpeech.cancel();
+})
+
 async function readNextSentencesLoop() {
   while (true) {
     console.log('gonna read next sentence');
@@ -187,6 +196,7 @@ const combinedInput = ref('')
 
 function submitChatInput() {
   combinedInput.value = ''
+  webSpeech.cancel();
   handleSubmit()
 }
 
@@ -197,11 +207,11 @@ const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(-
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
 watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
+  console.log(msg.id);
   // console.log(messageContainer.value?.lastElementChild?.lastElementChild);
   messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
     behavior: 'smooth',
     block: 'end',
-
   });
 })
 
