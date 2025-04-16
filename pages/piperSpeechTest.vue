@@ -1,8 +1,10 @@
 <template>
   <div class="m-36">
     <form @submit.prevent="speech.enqueueSpeech(inputText)">
-      <UInput v-model="inputText"  />
+      <UInput v-model="inputText" />
       <UButton type="submit">Add to speech queue</UButton>
+      <!-- <USeparator orientation="vertical" /> -->
+      <UButton @click="sendSpeechAndPickNewRandomSentence()">Add random to speech queue</UButton>
     </form>
   </div>
 </template>
@@ -10,8 +12,14 @@
 <script lang="ts" setup>
 import OpenAI from 'openai';
 
+import { getRandomSentence } from '@/tests/testManuscript'
+
+function sendSpeechAndPickNewRandomSentence() {
+  inputText.value = getRandomSentence();
+  speech.enqueueSpeech(inputText.value);
+}
   
-const inputText = ref('Jacob är helt okej!');
+const inputText = ref('Niels har stenkoll på läget!');
 const openAI = new OpenAI({
   apiKey: 'speaches',
   baseURL: 'http://localhost:8000/v1',

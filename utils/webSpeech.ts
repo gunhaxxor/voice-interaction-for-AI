@@ -10,7 +10,7 @@ export interface UtteranceOptions {
    * @default 'en-US'
    */
   // lang?: SpeechSynthesisUtterance['lang']
-  lang?: PossibleLanguages
+  lang?: PossibleLanguagesBCP47
   /**
    * Gets and sets the pitch at which the utterance will be spoken at.
    *
@@ -50,7 +50,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
   }
 
   let speechState: SpeechState = 'idle';
-  function setNewSpeechState(newSpeechState: SpeechState) {
+  function setSpeechState(newSpeechState: SpeechState) {
     const prevSpeechState = speechState;
     speechState = newSpeechState;
     speechStateChangedHandler?.(newSpeechState, prevSpeechState);
@@ -122,22 +122,22 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     utterance.onstart = () => {
       onstartBugFlag = false;
       setCurrentFromQueue()
-      setNewSpeechState('speaking');
+      setSpeechState('speaking');
       if (utterance !== currentUtterance) {
         throw new Error('currentUtterance is not the same as utterance. There is a bug');
       }
     }
     utterance.onerror = (event) => {
       console.log('utterance.onerror', event);
-      setNewSpeechState('error');
+      setSpeechState('error');
     }
     utterance.onpause = (event) => {
       console.log('utterance.onpause', event);
-      setNewSpeechState('paused');
+      setSpeechState('paused');
     }
     utterance.onresume = (event) => {
       console.log('utterance.onresume', event);
-      setNewSpeechState('speaking');
+      setSpeechState('speaking');
     }
     utterance.onend = () => {
       currentUtterance = undefined;
@@ -145,7 +145,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
       utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'utterance ended');
       speechQueueUpdatedHandler?.(speechQueue, currentSpeech, 'speech ended');
       if (utteranceQueue.length === 0) {
-        setNewSpeechState('idle');
+        setSpeechState('idle');
       }
     }
     addToQueue(utterance);
@@ -173,7 +173,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
     currentSpeech = undefined;
     utteranceQueueUpdatedHandler?.(utteranceQueue, currentUtterance, 'all speech cancelled');
     speechQueueUpdatedHandler?.(speechQueue, currentSpeech, 'all speech cancelled');
-    setNewSpeechState('idle');
+    setSpeechState('idle');
   }
 
   function getCurrentSpeech() {
@@ -194,7 +194,7 @@ export function initiatateSpeechSynth(defaultUtteranceOptions: UtteranceOptions 
 
   function pause() {
     synth.pause();
-    setNewSpeechState('paused');
+    setSpeechState('paused');
   }
 
   function resume() {

@@ -19,7 +19,29 @@ export interface TTSService {
   onSpeechQueueUpdated(handler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
 
+export class TTSServiceCallbackHandling implements Pick<TTSService, 'onError' | 'onSpeechStateChanged' | 'onSpeechQueueUpdated'> {
 
+  protected errorHandler?: (error: Error) => void;
+  onError(errorHandler: (error: Error) => void): void {
+    this.errorHandler = errorHandler;
+  }
+
+  protected speechState: SpeechState = 'idle';
+  protected setSpeechState(newSpeechState: SpeechState): void {
+    const prevSpeechState = this.speechState;
+    this.speechState = newSpeechState;
+    this.speechStateHandler?.(newSpeechState, prevSpeechState);
+  }
+
+  protected speechStateHandler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void;
+  onSpeechStateChanged(handler?: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
+    this.speechStateHandler = handler;
+  }
+  protected speechQueueUpdatedHandler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void;
+  onSpeechQueueUpdated(handler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
+    this.speechQueueUpdatedHandler = handler;
+  }
+}
 import { isSpeechSynthesisSupported, initiatateSpeechSynth, type UtteranceOptions } from "./webSpeech";
 export class WebSpeechService implements TTSService {
   private speech: ReturnType<typeof initiatateSpeechSynth>
