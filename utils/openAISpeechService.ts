@@ -38,6 +38,20 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     return this.currentSpeech?.text;
   }
 
+  pause(): void {
+    this.currentSpeech?.audio?.pause();
+    this.setSpeechState('paused');
+  }
+
+  resume(): void {
+    this.currentSpeech?.audio?.play();
+    this.setSpeechState('speaking');
+  }
+
+  getCurrentSpeechState(): SpeechState {
+    return this.speechState;
+  }
+
   private speechQueue: SpeechQueueRecord[] = [];
   getPendingSpeech(): string[] {
     return this.speechQueue.map(speech => speech.text);
@@ -64,7 +78,10 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     this.currentSpeech = this.startSpeechPlayback(pluckedSpeech);
 
     //Hopefully this reliably consumes the queue until its empty
-    this.currentSpeech.playedPromise.finally(() => {
+    this.currentSpeech.playedPromise.catch((err) => {
+      console.error(err);
+      this.setSpeechState('error');
+    }).finally(() => {
       console.log('current speech playedPromise fullfilled', this.currentSpeech);
       if (!this.speechQueue.length) {
         this.currentSpeech = undefined;
@@ -89,6 +106,9 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     const { promise: playedPromise, resolve: resolvePlayed, reject: rejectPlayed } = Promise.withResolvers<void>();
     record.playedPromise = playedPromise;
     record.audio.play();
+    if (this.speechState !== 'speaking') {
+      this.setSpeechState('speaking');
+    }
     record.audio.onerror = (errorEvt) => rejectPlayed(errorEvt);
     record.audio.onended = () => resolvePlayed()
     if (!this.isStartedSpeechRecord(record)) {
@@ -173,20 +193,8 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     const speechRecord: SpeechQueueRecord = {
       text,
       requestState: 'standby',
-  }
+    };
+
     const antecedentRecord = this.addToQueue(speechRecord);
-
-    // if (speechRecord.requestPromise) {
-    //   await speechRecord.requestPromise
-    //   console.log('speechRecord requestPromise resolved', speechRecord);
-    // }
-    // console.log('enqueueSpeech. new queue:', JSON.stringify(this.speechQueue));
-
-
-    // Should we fire API request directly?
-    // if (!antecedentRecord || this.speechRecordRequestHasFinished(antecedentRecord)) {
-    //   // this.startSpeechRequest(speechRecord, options);
-    // }
-
   }
 }

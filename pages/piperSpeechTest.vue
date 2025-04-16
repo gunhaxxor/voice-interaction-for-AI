@@ -6,6 +6,9 @@
       <!-- <USeparator orientation="vertical" /> -->
       <UButton @click="sendSpeechAndPickNewRandomSentence()">Add random to speech queue</UButton>
     </form>
+    <div>
+      <pre>{{ speechState }}</pre>
+    </div>
   </div>
 </template>
 
@@ -28,6 +31,11 @@ const openAI = new OpenAI({
 )
   
 const speech = new OpenAISpeechService(openAI);
+
+const speechState = ref<SpeechState>(speech.getCurrentSpeechState());
+speech.onSpeechStateChanged((newSpeechState) => {
+  speechState.value = newSpeechState;
+})
 
 </script>
 
