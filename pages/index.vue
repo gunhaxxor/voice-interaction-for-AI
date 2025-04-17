@@ -46,9 +46,15 @@ recognition.onInputSpeechStateChanged((state) => {
   userIsSpeaking.value = state === 'speaking' ? true : false;
   if (state === 'speaking') {
     console.log('user started speaking. Will cancel speechService');
-    webSpeech.cancel();
+    // webSpeech.cancel();
+    stopSpeechAndResponseStream();
   }
 })
+
+function stopSpeechAndResponseStream() {
+  webSpeech.cancel();
+  stopChatRequest();
+}
 // const currentTranscript = ref('');
 recognition.onTextReceived((text) => {
   writtenInput.value = text;
@@ -114,7 +120,7 @@ webSpeech.onSpeechQueueUpdated((pendingSpeech, newCurrentSpeech, reason) => {
   currentSpeech.value = newCurrentSpeech;
 })
 
-const { messages, input: writtenInput, handleSubmit, status: chatStatus, data: chatData } = useChat()
+const { messages, input: writtenInput, handleSubmit, status: chatStatus, data: chatData, stop: stopChatRequest } = useChat()
 const parsedMessages = computed(() => {
   return messages.value.map((message) => {
     return {
@@ -151,7 +157,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  webSpeech.cancel();
+  stopSpeechAndResponseStream();
 })
 
 async function readNextSentencesLoop() {
@@ -196,7 +202,7 @@ const combinedInput = ref('')
 
 function submitChatInput() {
   combinedInput.value = ''
-  webSpeech.cancel();
+  stopSpeechAndResponseStream();
   handleSubmit()
 }
 
