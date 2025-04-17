@@ -206,14 +206,12 @@ const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(-
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
-watch(() => parsedMessages.value[parsedMessages.value.length - 1], (msg) => {
-  console.log(msg.id);
-  // console.log(messageContainer.value?.lastElementChild?.lastElementChild);
+watch(() => parsedMessages.value[parsedMessages.value.length - 1], async (msg) => {
   messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
     behavior: 'smooth',
     block: 'end',
   });
-})
+}, { flush: 'post' });
 
 function testFunction() {
   messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
