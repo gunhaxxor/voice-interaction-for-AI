@@ -30,21 +30,23 @@ onStartTyping(() => {
   }
 })
 
-const recognition = new WhisperRecognitionService({
-  url: 'http://localhost:8000/v1/',
-  lang: 'sv',
-})
-// const recognition = new WebRecognitionService({
-//   lang: 'sv-SE',
+// const recognition = new WhisperRecognitionService({
+//   url: 'http://localhost:8000/v1/',
+//   lang: 'sv',
 // })
+const recognition = new WebRecognitionService({
+  lang: 'sv-SE',
+})
 const recognitionIsListening = ref(false);
 recognition.onListeningStateChanged((state) => {
   recognitionIsListening.value = state === 'listening' ? true : false;
 })
 const userIsSpeaking = ref(false);
 recognition.onInputSpeechStateChanged((state) => {
+  console.log('input speech state changed', state);
+  const prev = userIsSpeaking.value;
   userIsSpeaking.value = state === 'speaking' ? true : false;
-  if (state === 'speaking') {
+  if (state === 'speaking' && prev === false) {
     console.log('user started speaking. Will cancel speechService');
     // webSpeech.cancel();
     stopSpeechAndResponseStream();
@@ -179,7 +181,6 @@ watch([chatStatus, () => messages.value.at(-1)], ([newChatStatus, lastMessageNew
     console.log('new sentence');
     wordWriter.write(lastMessageNewValue.content);
   }
-
 })
 
 const combinedInput = ref('')

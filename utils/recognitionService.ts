@@ -1,5 +1,5 @@
 export interface STTServiceListenOptions {
-  lang?: PossibleLanguages
+  lang?: PossibleLanguagesBCP47
 }
 
 type ListeningState = 'listening' | 'inactive';
@@ -46,11 +46,6 @@ export class WebRecognitionService implements STTService {
       }
     };
   }
-  private inputSpeechState: InputSpeechState = 'idle';
-  private setInputSpeechState(state: InputSpeechState): void {
-    this.inputSpeechState = state;
-    this.inputSpeechStateChangedHandler?.(state);
-  }
   async startListenAudio(options?: STTServiceListenOptions) {
     this.listeningTargetState = 'listening';
     this.recognition.continuous = true;
@@ -68,10 +63,20 @@ export class WebRecognitionService implements STTService {
         this.interimTextReceivedHandler?.(text);
       }
     }
+    this.recognition.onsoundend = () => {
+      console.log('WebRecognitionService:sound ended');
+      this.setInputSpeechState('idle');
+    }
+    this.recognition.onsoundstart = () => {
+      console.log('WebRecognitionService:sound started');
+      this.setInputSpeechState('speaking');
+    }
     this.recognition.onspeechstart = () => {
+      console.log('WebRecognitionService:speech started');
       this.setInputSpeechState('speaking');
     }
     this.recognition.onspeechend = () => {
+      console.log('WebRecognitionService:speech ended');
       this.setInputSpeechState('idle');
     }
     const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -104,6 +109,12 @@ export class WebRecognitionService implements STTService {
 
   getInputSpeechState(): InputSpeechState {
     return this.inputSpeechState;
+  }
+
+  private inputSpeechState: InputSpeechState = 'idle';
+  private setInputSpeechState(state: InputSpeechState): void {
+    this.inputSpeechState = state;
+    this.inputSpeechStateChangedHandler?.(state);
   }
 
   private listeningStateChangedHandler?: (state: ListeningState) => void;

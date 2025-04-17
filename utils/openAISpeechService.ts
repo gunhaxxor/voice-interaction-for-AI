@@ -151,7 +151,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
       const record = queue[i];
       if (record.requestState === 'standby') {
         console.log('found an idle request. Firing it off');
-        this.startSpeechRequest(record);
+        this.startSpeechRequest(record, { speed: 1.5 });
       }
     }
 
@@ -199,6 +199,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
       input: record.text,
       voice: 'sv_SE-nst-medium',
       speed: options?.speed,
+      // instructions: 'be sad when responding',
     })
     try {
       const blob = await response.blob();
