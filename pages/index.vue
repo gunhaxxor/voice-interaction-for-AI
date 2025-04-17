@@ -132,26 +132,10 @@ const parsedMessages = computed(() => {
   })
 })
 
-// watch(chatStatus, () => {
-//   if (chatStatus.value === 'ready' && messages.value.length !== 0) {
-//     currentSpeechSynthText.value = messages.value[messages.value.length - 1].content;
-//     // console.log('chatStatus ready!', currentSpeechSynthText.value);
-//     // speak();
-//   }
-// });
-
-watch(chatData, () => {
-  console.log('data updated:', chatData.value);
-})
-
-
-
 const sentenceTransformer = sentenceStreamer();
 const wordWriter = sentenceTransformer.writable.getWriter();
 const sentenceReader = sentenceTransformer.readable.getReader();
 
-// const segmenter = new Intl.Segmenter(['sv', 'en'], { granularity: 'sentence' });
-// const strArr = Array.from(segmenter.segment('Hello! Whats your name? My name is Bob!'));
 onMounted(() => {
   readNextSentencesLoop();
 })
@@ -212,8 +196,16 @@ const debugPanelClasses = 'grid grid-cols-2 items-center mt-3 border-t border-(-
 
 const messageContainer = useTemplateRef<HTMLDivElement>('messageContainer');
 
+// const { } = useWindowScroll();
 watch(() => parsedMessages.value[parsedMessages.value.length - 1], async (msg) => {
-  messageContainer.value?.lastElementChild?.lastElementChild?.scrollIntoView({
+  if (!messageContainer.value) return;
+  let scrollDistanceTotal = messageContainer.value?.scrollHeight - messageContainer.value?.clientHeight;
+  let distanceFromBottom = scrollDistanceTotal - messageContainer.value?.scrollTop;
+
+  if (distanceFromBottom > 100) {
+    return;
+  }
+  messageContainer.value.lastElementChild?.lastElementChild?.scrollIntoView({
     behavior: 'smooth',
     block: 'end',
   });
