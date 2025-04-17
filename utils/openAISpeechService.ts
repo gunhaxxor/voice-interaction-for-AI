@@ -5,7 +5,7 @@ interface OpenAISpeechServiceOptions extends TTSServiceSpeechOptions {
   lang: PossibleLanguagesISO6391,
 }
 
-type RequestState = 'standby' | 'requested' | 'resolved' | 'rejected';
+type RequestState = 'standby' | 'requested' | 'resolved' | 'rejected' | 'cancelled';
 type SpeechQueueRecord = {
   text: string,
   requestPromise?: Promise<void>,
@@ -19,21 +19,21 @@ type StartedSpeechQueueRecord = Required<SpeechQueueRecord>;
 
 export class OpenAISpeechService extends TTSServiceCallbackHandling implements TTSService {
   private openai: OpenAI
-  
+
   constructor(options: OpenAISpeechServiceOptions | OpenAI) {
     super();
-    if(options instanceof OpenAI) {
+    if (options instanceof OpenAI) {
       this.openai = options;
       return;
     }
 
     this.openai = new OpenAI({
-      baseURL: options.baseUrl?? 'https://api.openai.com/v1',
+      baseURL: options.baseUrl ?? 'https://api.openai.com/v1',
       apiKey: options.apiKey,
       dangerouslyAllowBrowser: true,
     });
   }
-  
+
   private currentSpeech?: Required<SpeechQueueRecord>;
   getCurrentSpeech(): string | undefined {
     return this.currentSpeech?.text;
@@ -45,9 +45,15 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
   }
 
   cancel(): void {
-    this.currentSpeech?.audio?.pause();
-    this.currentSpeech?.audio?.remove();
-    this.currentSpeech = undefined;
+    if (this.currentSpeech) {
+      this.currentSpeech.requestState = 'cancelled';
+      this.currentSpeech.audio?.pause();
+      this.currentSpeech.audio?.remove();
+      this.currentSpeech = undefined;
+    }
+    this.speechQueue.forEach((speech) => {
+      speech.requestState = 'cancelled';
+    })
     this.speechQueue.length = 0;
     this.setSpeechState('idle');
   }
@@ -96,7 +102,9 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
       console.error(err);
       this.setSpeechState('error');
     }).finally(() => {
-      console.log('current speech playedPromise fullfilled', this.currentSpeech);
+      // console.log('current speech playedPromise fullfilled', this.currentSpeech);
+
+      // This was the last speech, lets handle state accordingly
       if (!this.speechQueue.length) {
         this.currentSpeech = undefined;
         this.setSpeechState('idle');
@@ -104,6 +112,9 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
         return;
       }
       const firstInQueue = this.speechQueue.at(0);
+      if (firstInQueue?.requestState === 'cancelled') {
+        return;
+      }
       if (firstInQueue?.requestState === 'resolved') {
         this.pluckAndStartNextSpeech();
       } else if (firstInQueue?.requestPromise) {
@@ -151,7 +162,8 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
         throw new Error('firstInQueue is not requested');
       }
       firstInQueue.requestPromise?.finally(() => {
-        console.log('first in queue requestPromise fullfilled', firstInQueue);
+        if (firstInQueue.requestState === 'cancelled') return;
+        // console.log('first in queue requestPromise fullfilled', firstInQueue);
         if (!this.currentSpeech) {
           this.pluckAndStartNextSpeech();
         }
