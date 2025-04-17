@@ -45,7 +45,7 @@ const userIsSpeaking = ref(false);
 recognition.onInputSpeechStateChanged((state) => {
   userIsSpeaking.value = state === 'speaking' ? true : false;
   if (state === 'speaking') {
-    console.log('started speaking. Will cancel speechService');
+    console.log('user started speaking. Will cancel speechService');
     webSpeech.cancel();
   }
 })
