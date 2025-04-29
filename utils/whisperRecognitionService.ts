@@ -107,7 +107,7 @@ export class WhisperRecognitionService implements STTService {
   }
   
   private inputSpeechState: "speaking" | "idle" = "idle"
-  getInputSpeechState(): "speaking" | "idle" {
+  getVADState(): "speaking" | "idle" {
     return this.inputSpeechState
   }
 
@@ -117,7 +117,7 @@ export class WhisperRecognitionService implements STTService {
   }
 
   private inputSpeechStateChangedHandler?: ((state: "speaking" | "idle") => void)
-  onInputSpeechStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
+  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
     this.inputSpeechStateChangedHandler = handler;
   }
   

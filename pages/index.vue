@@ -37,18 +37,18 @@ onStartTyping(() => {
 const recognition = new WebRecognitionService({
   lang: 'sv-SE',
 })
-const recognitionIsListening = ref(false);
+const currentListeningState = ref<ReturnType<WebRecognitionService['getListeningState']>>('inactive');
 recognition.onListeningStateChanged((state) => {
-  recognitionIsListening.value = state === 'listening' ? true : false;
+  console.log('listening state changed', state);
+  currentListeningState.value = state;
 })
-const userIsSpeaking = ref(false);
-recognition.onInputSpeechStateChanged((state) => {
+const inputSpeechState = ref<ReturnType<WebRecognitionService['getInputSpeechState']>>('idle');
+recognition.onVADStateChanged((state) => {
   console.log('input speech state changed', state);
-  const prev = userIsSpeaking.value;
-  userIsSpeaking.value = state === 'speaking' ? true : false;
-  if (state === 'speaking' && prev === false) {
+  const prev = inputSpeechState.value;
+  inputSpeechState.value = state;
+  if (state === 'speaking' && prev !== state) {
     console.log('user started speaking. Will cancel speechService');
-    // webSpeech.cancel();
     stopSpeechAndResponseStream();
   }
 })
@@ -99,12 +99,12 @@ const currentListenModeIcon = computed(() => {
   }
 })
 
-// const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
-const webSpeech = new OpenAISpeechService({
-  baseUrl: 'http://localhost:8000/v1',
-  apiKey: 'ollama',
-  lang: 'sv',
-});
+const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
+// const webSpeech = new OpenAISpeechService({
+//   baseUrl: 'http://localhost:8000/v1',
+//   apiKey: 'ollama',
+//   lang: 'sv',
+// });
 
 const autoSpeak = ref(true);
 // const toggleAutoSpeak = useToggle(autoSpeak);
@@ -238,7 +238,9 @@ function testFunction() {
           <template #content>
             <div :class="debugPanelClasses">
               <p>Listening: </p>
-              <p>{{ recognition.getListeningState() }}</p>
+              <p>{{ currentListeningState }}</p>
+              <p>inputSpeechState: </p>
+              <p>{{ inputSpeechState }}</p>
               <p>ListenMode: </p>
               <p>{{ currentListenMode }}</p>
             </div>

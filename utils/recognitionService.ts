@@ -1,24 +1,78 @@
 export interface STTServiceListenOptions {
-  lang?: PossibleLanguagesBCP47
+  /**
+   * Language to recognize. Either ISO6391 or BCP47 (or both) depending on the implementation
+   */
+  lang?: PossibleLanguagesBCP47 | PossibleLanguagesISO6391
 }
 
+/**
+ * Represents whether the recognition service is listening to incoming audio or not
+ */
 type ListeningState = 'listening' | 'inactive';
-type InputSpeechState = 'speaking' | 'idle';
-type VADState = 'unset' | 'voiceIsInactive' | 'voiceIsActive';
+
+/**
+ * VAD stands for Voice Activity Detection.
+ * Represents whether the user is speaking or not.
+ */
+type VADState = 'speaking' | 'idle';
+
+/**
+ * VAD stands for Voice Activity Detection.
+ * This state overrides whether the input audio is considered speech or not.
+ * unset = no override
+ */
+type VADOverrideState = 'unset' | VADState;
 export interface STTService {
+  /**
+   * 
+   * Attach callback to get any error happening within this recognition implementation
+   */
   onError(errorHandler: (error: Error) => void): void;
+  /**
+   * 
+   * @param {STTServiceListenOptions} options - Listening options
+   */
   startListenAudio(options?: STTServiceListenOptions): Promise<void>;
+  /**
+   * Stops listening to audio.
+   * Does not kill the recognition service. Implementations should allow to start again after stopping
+   */
   stopListenAudio(): void;
-  setVADOverride?(state: VADState): void;
-  releaseVADOverride?(): void;
+
   getListeningState(): ListeningState;
-  getInputSpeechState(): InputSpeechState;
-  // getTranscript(): string;
+  /**
+   * 
+   * Attach callback to get listening state changes. Listening state represents 
+   * whether the recognition service is listening to incoming audio or not
+   */
   onListeningStateChanged(handler?: ((state: ListeningState) => void)): void;
+
+  getVADState(): VADState;
+
+  /**
+   * 
+   * Attach callback to get input speech state changes. Input speech state represents 
+   * whether the user is speaking or not
+   */
+  onVADStateChanged(handler?: ((state: 'speaking' | 'idle') => void)): void;
+  /**
+   * 
+   * Manually override the Voice Activity Detection. This is optional to implement but 
+   * is recommended if the underlying api allows. 
+   * The most common use case for this function is to react to the output of a TTS engine and dynamically set the state
+   * between `speaking` and `unset`. This is done to mitigate that the system recognizes it's own voice as speech
+   * @param {VADOverrideState} state - Voice Activity Detection state
+   */
+  setVADOverride?(state: VADOverrideState): void;
+  /**
+   * 
+   * Manually release the Voice Activity Detection override.
+   * Equivalent to calling `setVADOverride('unset')`
+   */
+  releaseVADOverride?(): void;
+
   onTextReceived(handler?: ((text: string) => void)): void;
   onInterimTextReceived(handler?: ((text: string) => void)): void;
-  onInputSpeechStateChanged(handler?: ((state: 'speaking' | 'idle') => void)): void;
-  // removeTextReceivedListener(listener: (text: string) => void): void;
 }
 
 export class WebRecognitionService implements STTService {
@@ -65,19 +119,19 @@ export class WebRecognitionService implements STTService {
     }
     this.recognition.onsoundend = () => {
       console.log('WebRecognitionService:sound ended');
-      this.setInputSpeechState('idle');
+      this.setVADState('idle');
     }
     this.recognition.onsoundstart = () => {
       console.log('WebRecognitionService:sound started');
-      this.setInputSpeechState('speaking');
+      this.setVADState('speaking');
     }
     this.recognition.onspeechstart = () => {
       console.log('WebRecognitionService:speech started');
-      this.setInputSpeechState('speaking');
+      this.setVADState('speaking');
     }
     this.recognition.onspeechend = () => {
       console.log('WebRecognitionService:speech ended');
-      this.setInputSpeechState('idle');
+      this.setVADState('idle');
     }
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.recognition.onstart = () => {
@@ -92,7 +146,7 @@ export class WebRecognitionService implements STTService {
         this.recognition.start();
         return;
       }
-      this.inputSpeechState = 'idle';
+      this.VADState = 'idle';
     }
     return promise;
   }
@@ -107,14 +161,14 @@ export class WebRecognitionService implements STTService {
     return this.listeningState;
   }
 
-  getInputSpeechState(): InputSpeechState {
-    return this.inputSpeechState;
+  getVADState(): VADState {
+    return this.VADState;
   }
 
-  private inputSpeechState: InputSpeechState = 'idle';
-  private setInputSpeechState(state: InputSpeechState): void {
-    this.inputSpeechState = state;
-    this.inputSpeechStateChangedHandler?.(state);
+  private VADState: VADState = 'idle';
+  private setVADState(state: VADState): void {
+    this.VADState = state;
+    this.VADStateChangedHandler?.(state);
   }
 
   private listeningStateChangedHandler?: (state: ListeningState) => void;
@@ -136,9 +190,9 @@ export class WebRecognitionService implements STTService {
     this.interimTextReceivedHandler = handler;
   }
 
-  private inputSpeechStateChangedHandler?: (state: InputSpeechState) => void;
-  onInputSpeechStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
-    this.inputSpeechStateChangedHandler = handler;
+  private VADStateChangedHandler?: (state: VADState) => void;
+  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
+    this.VADStateChangedHandler = handler;
   }
 
 }
@@ -212,12 +266,12 @@ export class MockSTTService implements STTService {
     this.interimTextReceivedHandler = handler;
   }
 
-  private setInputSpeechState(state: InputSpeechState): void {
+  private setInputSpeechState(state: VADState): void {
     this.inputSpeechState = state;
     this.speechStateChangedHandler?.(state);
   }
-  private inputSpeechState: InputSpeechState = 'idle';
-  getInputSpeechState(): InputSpeechState {
+  private inputSpeechState: VADState = 'idle';
+  getVADState(): VADState {
     return this.inputSpeechState;
   }
 
@@ -230,8 +284,8 @@ export class MockSTTService implements STTService {
     return this.listeningState;
   }
 
-  private speechStateChangedHandler?: (state: InputSpeechState) => void;
-  onInputSpeechStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
+  private speechStateChangedHandler?: (state: VADState) => void;
+  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
     this.speechStateChangedHandler = handler;
   }
 

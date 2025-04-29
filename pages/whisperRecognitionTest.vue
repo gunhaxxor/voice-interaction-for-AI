@@ -53,7 +53,7 @@ whisperRecogniton.onListeningStateChanged((state) => {
   listening.value = state === 'listening' ? true : false;
 })
 const speaking = ref(false);
-whisperRecogniton.onInputSpeechStateChanged((state) => {
+whisperRecogniton.onVADStateChanged((state) => {
   speaking.value = state === 'speaking' ? true : false;
 })
 
