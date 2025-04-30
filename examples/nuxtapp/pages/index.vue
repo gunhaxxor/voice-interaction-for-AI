@@ -34,6 +34,8 @@ onStartTyping(() => {
 //   url: 'http://localhost:8000/v1/',
 //   lang: 'sv',
 // })
+
+import { WebRecognitionService } from 'speech-utils/recognitionService';
 const recognition = new WebRecognitionService({
   lang: 'sv-SE',
 })
@@ -99,6 +101,7 @@ const currentListenModeIcon = computed(() => {
   }
 })
 
+import { WebSpeechService } from 'speech-utils/speechService';
 const webSpeech = new WebSpeechService({ lang: 'sv-SE' });
 // const webSpeech = new OpenAISpeechService({
 //   baseUrl: 'http://localhost:8000/v1',
@@ -134,6 +137,7 @@ const parsedMessages = computed(() => {
   })
 })
 
+import  sentenceStreamer  from 'speech-utils/sentenceStreamer';
 const sentenceTransformer = sentenceStreamer();
 const wordWriter = sentenceTransformer.writable.getWriter();
 const sentenceReader = sentenceTransformer.readable.getReader();
