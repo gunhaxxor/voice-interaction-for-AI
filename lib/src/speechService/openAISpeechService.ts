@@ -1,5 +1,7 @@
 import OpenAI from "openai";
-interface OpenAISpeechServiceOptions extends TTSServiceSpeechOptions {
+import { type SpeechService, SpeechServiceCallbackHandling, type SpeechServiceSpeechOptions, type SpeechState } from "./interface";
+import type { PossibleLanguagesISO6391 } from "../utilityTypes";
+interface OpenAISpeechServiceOptions extends SpeechServiceSpeechOptions {
   baseUrl: string,
   apiKey: string,
   lang: PossibleLanguagesISO6391,
@@ -17,7 +19,7 @@ type SpeechQueueRecord = {
 type RequestedSpeechQueueRecord = SpeechQueueRecord & { requestPromise: Promise<void> };
 type StartedSpeechQueueRecord = Required<SpeechQueueRecord>;
 
-export class OpenAISpeechService extends TTSServiceCallbackHandling implements TTSService {
+export class OpenAISpeechService extends SpeechServiceCallbackHandling implements SpeechService {
   private openai: OpenAI
 
   constructor(options: OpenAISpeechServiceOptions | OpenAI) {
@@ -39,7 +41,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     return this.currentSpeech?.text;
   }
 
-  speakDirectly(text: string, options?: TTSServiceSpeechOptions): void {
+  speakDirectly(text: string, options?: SpeechServiceSpeechOptions): void {
     this.cancel();
     this.enqueueSpeech(text, options);
   }
@@ -149,7 +151,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     const loops = Math.min(queue.length, 2);
     for (let i = 0; i < loops; i++) {
       const record = queue[i];
-      if (record.requestState === 'standby') {
+      if (record?.requestState === 'standby') {
         console.log('found an idle request. Firing it off');
         this.startSpeechRequest(record, { speed: 1.5 });
       }
@@ -190,7 +192,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     return record.requestState === 'resolved' || record.requestState === 'rejected';
   }
 
-  private async startSpeechRequest(record: SpeechQueueRecord, options?: TTSServiceSpeechOptions) {
+  private async startSpeechRequest(record: SpeechQueueRecord, options?: SpeechServiceSpeechOptions) {
     record.requestState = 'requested';
     const { promise: requestPromise, resolve: resolveRequest, reject: rejectRequest } = Promise.withResolvers<void>();
     record.requestPromise = requestPromise;
@@ -216,7 +218,7 @@ export class OpenAISpeechService extends TTSServiceCallbackHandling implements T
     return requestPromise;
   }
 
-  async enqueueSpeech(text: string, options?: TTSServiceSpeechOptions): Promise<void> {
+  async enqueueSpeech(text: string, options?: SpeechServiceSpeechOptions): Promise<void> {
     const speechRecord: SpeechQueueRecord = {
       text,
       requestState: 'standby',

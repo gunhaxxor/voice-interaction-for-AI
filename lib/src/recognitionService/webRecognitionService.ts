@@ -86,25 +86,15 @@ export class WebRecognitionService implements RecognitionService {
   getListeningState(): ListeningState {
     return this.listeningState;
   }
-
-  getVADState(): VADState {
-    return this.VADState;
-  }
-
-  private VADState: VADState = 'idle';
-  private setVADState(state: VADState): void {
-    this.VADState = state;
-    this.VADStateChangedHandler?.(state);
-  }
-
-  private listeningStateChangedHandler?: (state: ListeningState) => void;
   private setListeningState(state: ListeningState): void {
     this.listeningState = state;
     this.listeningStateChangedHandler?.(state);
   }
+  private listeningStateChangedHandler?: (state: ListeningState) => void;
   onListeningStateChanged(handler?: (state: ListeningState) => void): void {
     this.listeningStateChangedHandler = handler;
   }
+
 
   private textReceivedHandler?: (text: string) => void;
   onTextReceived(handler?: (text: string) => void): void {
@@ -116,6 +106,15 @@ export class WebRecognitionService implements RecognitionService {
     this.interimTextReceivedHandler = handler;
   }
 
+
+  private VADState: VADState = 'idle';
+  getVADState(): VADState {
+    return this.VADState;
+  }
+  private setVADState(state: VADState): void {
+    this.VADState = state;
+    this.VADStateChangedHandler?.(state);
+  }
   private VADStateChangedHandler?: (state: VADState) => void;
   onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
     this.VADStateChangedHandler = handler;

@@ -76,3 +76,55 @@ export interface RecognitionService {
   onTextReceived(handler?: ((text: string) => void)): void;
   onInterimTextReceived(handler?: ((text: string) => void)): void;
 }
+
+export class RecognitionServiceCallbackHandling implements Pick<RecognitionService, 'onError'
+  | 'getListeningState'
+  | 'onListeningStateChanged'
+  | 'getVADState'
+  | 'onVADStateChanged'
+  | 'onTextReceived'
+  | 'onInterimTextReceived'
+> {
+  protected errorHandler?: (error: Error) => void
+  onError(errorHandler: (error: Error) => void): void {
+    this.errorHandler = errorHandler;
+  }
+
+  protected listeningState: ListeningState = 'inactive'
+  public getListeningState(): ListeningState {
+    return this.listeningState;
+  }
+  protected setListeningState(state: ListeningState): void {
+    this.listeningState = state;
+    this.listeningStateChangedHandler?.(state);
+  }
+
+  protected listeningStateChangedHandler?: (state: ListeningState) => void
+  public onListeningStateChanged(handler?: ((state: ListeningState) => void)): void {
+    this.listeningStateChangedHandler = handler;
+  }
+
+
+  protected VADState: VADState = 'idle'
+  public getVADState(): VADState {
+    return this.VADState;
+  }
+  protected setVADState(state: VADState): void {
+    this.VADState = state;
+    this.VADStateChangedHandler?.(state);
+  }
+  protected VADStateChangedHandler?: (state: VADState) => void
+  onVADStateChanged(handler?: ((state: VADState) => void)): void {
+    this.VADStateChangedHandler = handler;
+  }
+
+  protected textReceivedHandler?: (text: string) => void
+  onTextReceived(handler?: ((text: string) => void)): void {
+    this.textReceivedHandler = handler;
+  }
+
+  protected interimTextReceivedHandler?: (text: string) => void
+  onInterimTextReceived(handler?: ((text: string) => void)): void {
+    this.interimTextReceivedHandler = handler;
+  }
+}

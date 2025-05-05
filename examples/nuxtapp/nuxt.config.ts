@@ -15,6 +15,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY
   },
+  nitro: {
+    routeRules: {
+      // Needed for the sharedArrayBuffer in vosklet wasm communication
+      '/**': { headers: { 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Embedder-Policy': 'require-corp' } }
+    }
+  },
   ssr: false,
   // devServer: {
   //   cors: {
