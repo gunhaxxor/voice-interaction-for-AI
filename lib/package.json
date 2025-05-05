@@ -7,7 +7,6 @@
     "test": "vitest"
   },
   "exports": {
-    ".": "./index.ts",
     "./speechService/*": "./src/speechService/*",
     "./recognitionService/*": "./src/recognitionService/*",
     "./sentenceStreamer": "./src/sentenceStreamer.ts"
