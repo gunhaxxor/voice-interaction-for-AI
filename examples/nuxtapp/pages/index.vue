@@ -15,7 +15,6 @@ const { state: currentVideoUrl, next: nextVideoUrl, go: setVideoIndex } = useCyc
 
 const bgVideoRef = templateRef('backgroundVideo');
 onMounted(() => {
-  // setVideoIndex(Math.floor(Math.random() * videoUrls.value.length));
   if (isDefined(bgVideoRef)) {
     bgVideoRef.value.loop = true;
     bgVideoRef.value.playbackRate = 0.7;
