@@ -1,4 +1,4 @@
-import type { RecognitionService } from "./recognitionService";
+import type { RecognitionService } from "./interface";
 
 export class MockRecognitionService implements RecognitionService {
   private readonly manuscript = [

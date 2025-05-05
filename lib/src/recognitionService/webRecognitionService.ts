@@ -1,4 +1,4 @@
-import type { ListeningState, RecognitionService, RecognitionServiceListenOptions, VADState } from './recognitionService';
+import type { ListeningState, RecognitionService, RecognitionServiceListenOptions, VADState } from './interface';
 import * as RecognitionTypes from './recognitionTypes';
 
 export class WebRecognitionService implements RecognitionService {

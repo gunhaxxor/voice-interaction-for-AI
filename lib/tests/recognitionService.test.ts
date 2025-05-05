@@ -1,5 +1,6 @@
 import { assert, describe, expect, test, vi } from "vitest";
-import { type RecognitionService, MockRecognitionService } from "../src/recognitionService/recognitionService";
+import type { RecognitionService } from '../src/recognitionService/interface';
+import { MockRecognitionService } from "../src/recognitionService/mockRecognitionService";
 import { manuscript } from './testManuscript'
 
 describe('MockSTTService', () => {

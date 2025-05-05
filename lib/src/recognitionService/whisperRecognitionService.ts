@@ -1,5 +1,5 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type RecognitionService, type RecognitionServiceListenOptions } from "./recognitionService";
+import { type RecognitionService, type RecognitionServiceListenOptions } from "./interface";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';

@@ -1,4 +1,4 @@
-import type { SpeechService, SpeechState } from "./speechService";
+import type { SpeechService, SpeechState } from "./interface";
 
 export class MockSpeechServiceImpl implements SpeechService{
   private queue: string[] = [];
