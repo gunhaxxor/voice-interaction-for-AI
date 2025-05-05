@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { expectedSentences, markdownString } from './markdown-example';
+import sentenceStreamer from "../src/sentenceStreamer";
 
 describe('sentenceStreamer', () => {
   test('handles basic markdown', async () => {

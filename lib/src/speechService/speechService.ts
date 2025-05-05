@@ -1,17 +1,18 @@
 
+import type { PossibleLanguagesBCP47 } from "../utilityTypes";
 export type SpeechState = 'idle' | 'speaking' | 'paused' | 'error'
-export interface TTSServiceSpeechOptions {
+export interface SpeechServiceSpeechOptions {
   lang?: PossibleLanguagesBCP47,
   speed?: number
   pitch?: number
 }
-export interface TTSService {
+export interface SpeechService {
   onError(errorHandler: (error: Error) => void): void
-  speakDirectly(text: string, options?: TTSServiceSpeechOptions): void,
+  speakDirectly(text: string, options?: SpeechServiceSpeechOptions): void,
   pause(): void,
   resume(): void,
   cancel(): void,
-  enqueueSpeech(text: string, options?: TTSServiceSpeechOptions): void,
+  enqueueSpeech(text: string, options?: SpeechServiceSpeechOptions): void,
   getPendingSpeech(): string[],
   getCurrentSpeech(): string | undefined,
   getCurrentSpeechState(): SpeechState,
@@ -19,7 +20,7 @@ export interface TTSService {
   onSpeechQueueUpdated(handler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void
 }
 
-export class TTSServiceCallbackHandling implements Pick<TTSService, 'onError' | 'onSpeechStateChanged' | 'onSpeechQueueUpdated'> {
+export class SpeechServiceCallbackHandling implements Pick<SpeechService, 'onError' | 'onSpeechStateChanged' | 'onSpeechQueueUpdated'> {
 
   protected errorHandler?: (error: Error) => void;
   onError(errorHandler: (error: Error) => void): void {
@@ -42,68 +43,8 @@ export class TTSServiceCallbackHandling implements Pick<TTSService, 'onError' | 
     this.speechQueueUpdatedHandler = handler;
   }
 }
-import { isSpeechSynthesisSupported, initiatateSpeechSynth, type UtteranceOptions } from "./webSpeech";
-export class WebSpeechService implements TTSService {
-  private speech: ReturnType<typeof initiatateSpeechSynth>
 
-  constructor(options?: Parameters<typeof initiatateSpeechSynth>[0]) {
-    if (!isSpeechSynthesisSupported()) {
-      console.error('SpeechSynthesis is not supported on this device');
-      throw new Error('SpeechSynthesis is not supported on this device. Chech with isSpeechSynthesisSupported() before init');
-    }
-    this.speech = initiatateSpeechSynth(options)
-  }
-  //TODO: Actually call handler if error
-  private errorHandler?: (error: Error) => void;
-  onError(errorHandler: (error: Error) => void): void {
-    this.errorHandler = errorHandler;
-  }
-  enqueueSpeech(text: string, options?: UtteranceOptions) {
-    this.speech.addSpeechToQueue(text, options);
-  }
-  speakDirectly(text: string, options?: UtteranceOptions) {
-    this.speech.clearQueueAndSpeak(text, options);
-  }
-  cancel() {
-    this.speech.stopAllSpeech();
-  }
-  pause() {
-    this.speech.pause();
-  }
-  resume() {
-    this.speech.resume();
-  }
-  getPendingSpeech() {
-    return this.speech.getSpeechQueue()
-  }
-  getCurrentSpeech(): string | undefined {
-    return this.speech.getCurrentSpeech();
-  }
-
-  onSpeechQueueUpdated(handler: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void): void {
-    this.speech.setSpeechQueueUpdatedListener(handler);
-  }
-
-  getCurrentSpeechState(): SpeechState {
-    return this.speech.getCurrentSpeechState();
-  }
-
-  onSpeechStateChanged(handler: (newSpeechState: SpeechState, prevSpeechState: SpeechState) => void): void {
-    this.speech.setSpeechStateChangedListener(handler);
-  }
-
-  // Implementation specific functionality
-  // Should prefer to not use this as its not in interface and thus not as easily replaceable
-
-  getAvailableVoices() {
-    return this.speech.getAvailableVoices();
-  }
-  setVoicesChangedListener(handler: (voices: SpeechSynthesisVoice[]) => void) {
-    this.speech.setVoicesChangedListener(handler);
-  }
-}
-
-export class MockTTSServiceImpl implements TTSService{
+export class MockSpeechServiceImpl implements SpeechService{
   private queue: string[] = [];
   private currentSpeech: string | undefined = undefined;
   private queueHandler?: (pendingSpeech: string[], currentSpeech?: string, reason?: string) => void

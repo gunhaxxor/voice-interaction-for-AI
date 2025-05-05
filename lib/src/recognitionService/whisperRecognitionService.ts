@@ -1,16 +1,17 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type STTService, type STTServiceListenOptions } from "./recognitionService";
+import { type RecognitionService, type RecognitionServiceListenOptions } from "./recognitionService";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
+import type { PossibleLanguagesISO6391 } from "../utilityTypes";
 
-export interface WhisperRecognitionServiceOptions extends STTServiceListenOptions {
+export interface WhisperRecognitionServiceOptions extends RecognitionServiceListenOptions {
   url?: string,
   key?: string,
   lang?: PossibleLanguagesISO6391
 }
 
-export class WhisperRecognitionService implements STTService {
+export class WhisperRecognitionService implements RecognitionService {
   private options?: WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
@@ -68,7 +69,7 @@ export class WhisperRecognitionService implements STTService {
       this.setInputSpeechState('idle');
     }
   }
-  async startListenAudio(options?: STTServiceListenOptions){
+  async startListenAudio(options?: RecognitionServiceListenOptions){
     this.vad = await MicVAD.new({
       model: 'v5',
       frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs

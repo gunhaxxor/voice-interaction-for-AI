@@ -1,28 +1,28 @@
 import { assert, describe, expect, test, vi } from "vitest";
-import { type STTService, MockSTTService } from "@/utils/recognitionService";
+import { type RecognitionService, MockRecognitionService } from "../src/recognitionService/recognitionService";
 import { manuscript } from './testManuscript'
 
 describe('MockSTTService', () => {
   test('can initialize', () => {
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     expect(sttService).toBeDefined();
   })
   test('can startListenAudio without error', () => {
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     sttService.startListenAudio();
   })
   test('can stopListenAudio without error', () => {
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     sttService.startListenAudio();
     sttService.stopListenAudio();
   })
   test('can addTextReceivedListener without error', () => {
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     sttService.onTextReceived(() => { });
   })
   test('receives events if event listener added and startListenAudio', async () => {
     const mocklistener = vi.fn();
-    const sttService = new MockSTTService(['Hello!']);
+    const sttService = new MockRecognitionService(['Hello!']);
     sttService.onTextReceived(mocklistener);
     sttService.startListenAudio();
     await vi.waitUntil(() => mocklistener.mock.calls.length > 0, { timeout: 3000 });
@@ -30,7 +30,7 @@ describe('MockSTTService', () => {
   })
   test('doesnt receive event if stopListenAudio', async () => {
     const mocklistener = vi.fn();
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     sttService.startListenAudio();
     sttService.stopListenAudio()
     sttService.onTextReceived(mocklistener);
@@ -38,7 +38,7 @@ describe('MockSTTService', () => {
   })
   test('doesnt trigger listener if listener is removed', async () => {
     const mocklistener = vi.fn();
-    const sttService = new MockSTTService();
+    const sttService = new MockRecognitionService();
     sttService.startListenAudio();
     sttService.onTextReceived(mocklistener);
     sttService.onTextReceived(undefined);

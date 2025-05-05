@@ -1,4 +1,6 @@
-export interface STTServiceListenOptions {
+import type { PossibleLanguagesBCP47, PossibleLanguagesISO6391 } from "../utilityTypes";
+
+export interface RecognitionServiceListenOptions {
   /**
    * Language to recognize. Either ISO6391 or BCP47 (or both) depending on the implementation
    */
@@ -8,21 +10,21 @@ export interface STTServiceListenOptions {
 /**
  * Represents whether the recognition service is listening to incoming audio or not
  */
-type ListeningState = 'listening' | 'inactive';
+export type ListeningState = 'listening' | 'inactive';
 
 /**
  * VAD stands for Voice Activity Detection.
  * Represents whether the user is speaking or not.
  */
-type VADState = 'speaking' | 'idle';
+export type VADState = 'speaking' | 'idle';
 
 /**
  * VAD stands for Voice Activity Detection.
  * This state overrides whether the input audio is considered speech or not.
  * unset = no override
  */
-type VADOverrideState = 'unset' | VADState;
-export interface STTService {
+export type VADOverrideState = 'unset' | VADState;
+export interface RecognitionService {
   /**
    * 
    * Attach callback to get any error happening within this recognition implementation
@@ -30,9 +32,9 @@ export interface STTService {
   onError(errorHandler: (error: Error) => void): void;
   /**
    * 
-   * @param {STTServiceListenOptions} options - Listening options
+   * @param {RecognitionServiceListenOptions} options - Listening options
    */
-  startListenAudio(options?: STTServiceListenOptions): Promise<void>;
+  startListenAudio(options?: RecognitionServiceListenOptions): Promise<void>;
   /**
    * Stops listening to audio.
    * Does not kill the recognition service. Implementations should allow to start again after stopping
@@ -75,129 +77,8 @@ export interface STTService {
   onInterimTextReceived(handler?: ((text: string) => void)): void;
 }
 
-export class WebRecognitionService implements STTService {
-  private recognition: SpeechRecognition;
-  private defaultListenOptions?: STTServiceListenOptions;
-  private listeningTargetState: ListeningState = 'inactive';
 
-  constructor(options?: STTServiceListenOptions) {
-    this.defaultListenOptions = options;
-    const SpeechRecognition = window && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
-    if (!SpeechRecognition) {
-      throw new Error('Speech Recognition is not supported in this browser');
-    }
-    this.recognition = new SpeechRecognition();
-  }
-  private errorHandler?: (error: Error) => void;
-  onError(errorHandler: (error: Error) => void): void {
-    this.errorHandler = errorHandler;
-    this.recognition.onerror = (event) => {
-      const error = new Error(`Speech Recognition error (${event.error}): ` + event.message);
-      if (!this.errorHandler) {
-        console.error('No recognition errorhandler set, Speech Recognition error', error);
-      } else {
-        this.errorHandler?.(error);
-      }
-    };
-  }
-  async startListenAudio(options?: STTServiceListenOptions) {
-    this.listeningTargetState = 'listening';
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = options?.lang ?? this.defaultListenOptions?.lang ?? 'en-US';
-    this.recognition.start();
-    this.recognition.onresult = (evt) => {
-      const resultList = evt.results;
-      const latestResult = resultList[resultList.length - 1];
-      const isFinal = latestResult.isFinal;
-      const text = latestResult[0].transcript;
-      if (isFinal) {
-        this.textReceivedHandler?.(text);
-      } else {
-        this.interimTextReceivedHandler?.(text);
-      }
-    }
-    this.recognition.onsoundend = () => {
-      console.log('WebRecognitionService:sound ended');
-      this.setVADState('idle');
-    }
-    this.recognition.onsoundstart = () => {
-      console.log('WebRecognitionService:sound started');
-      this.setVADState('speaking');
-    }
-    this.recognition.onspeechstart = () => {
-      console.log('WebRecognitionService:speech started');
-      this.setVADState('speaking');
-    }
-    this.recognition.onspeechend = () => {
-      console.log('WebRecognitionService:speech ended');
-      this.setVADState('idle');
-    }
-    const { promise, resolve, reject } = Promise.withResolvers<void>();
-    this.recognition.onstart = () => {
-      // console.log('recognition listen started');
-      this.setListeningState('listening');
-      resolve();
-    }
-    this.recognition.onend = () => {
-      // console.log('recognition listen stopped');
-      if (this.listeningTargetState === 'listening') {
-        console.warn('recognition listen ended by browser, will try start it again');
-        this.recognition.start();
-        return;
-      }
-      this.VADState = 'idle';
-    }
-    return promise;
-  }
-  stopListenAudio(): void {
-    this.listeningTargetState = 'inactive';
-    this.setListeningState('inactive');
-    this.recognition.stop();
-  }
-
-  private listeningState: ListeningState = 'inactive';
-  getListeningState(): ListeningState {
-    return this.listeningState;
-  }
-
-  getVADState(): VADState {
-    return this.VADState;
-  }
-
-  private VADState: VADState = 'idle';
-  private setVADState(state: VADState): void {
-    this.VADState = state;
-    this.VADStateChangedHandler?.(state);
-  }
-
-  private listeningStateChangedHandler?: (state: ListeningState) => void;
-  private setListeningState(state: ListeningState): void {
-    this.listeningState = state;
-    this.listeningStateChangedHandler?.(state);
-  }
-  onListeningStateChanged(handler?: (state: ListeningState) => void): void {
-    this.listeningStateChangedHandler = handler;
-  }
-
-  private textReceivedHandler?: (text: string) => void;
-  onTextReceived(handler?: (text: string) => void): void {
-    this.textReceivedHandler = handler;
-  }
-  
-  private interimTextReceivedHandler?: (text: string) => void;
-  onInterimTextReceived(handler?: ((text: string) => void)): void {
-    this.interimTextReceivedHandler = handler;
-  }
-
-  private VADStateChangedHandler?: (state: VADState) => void;
-  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
-    this.VADStateChangedHandler = handler;
-  }
-
-}
-
-export class MockSTTService implements STTService {
+export class MockRecognitionService implements RecognitionService {
   private readonly manuscript = [
     'Hello!',
     'How are you?',

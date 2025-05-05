@@ -1,3 +1,5 @@
+import type { PossibleLanguagesBCP47 } from "../utilityTypes";
+
 export function isSpeechSynthesisSupported() {
   if(!window) return false
   return 'speechSynthesis' in window;
