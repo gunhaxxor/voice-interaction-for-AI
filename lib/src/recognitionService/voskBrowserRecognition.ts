@@ -1,7 +1,5 @@
 import { createModel } from 'vosk-browser';
 export async function init() {
-    // const model = await Vosk.createModel('model.tar.gz');
-    // const model = await createModel('/models/vosk-model-small-en-us-0.15.tar.gz');
     const model = await createModel('/models/vosk-model-small-sv-rhasspy-0.15.tar.gz');
 
     const recognizer = new model.KaldiRecognizer(16000);
