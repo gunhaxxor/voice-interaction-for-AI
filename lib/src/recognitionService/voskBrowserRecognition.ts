@@ -67,6 +67,7 @@ async function createAnalyser(stream: MediaStream) {
         currentRms = rms;
         callback?.(rms);
     }, 30);
+    return analyser;
 }
 export function onRMSUpdate(handler: (rms: number) => void) {
     callback = handler;
