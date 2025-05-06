@@ -43,7 +43,7 @@ function loadImplementation() {
     case 'vosk':
       break;
     case 'whisper':
-      console.log('loading whisper recognition service');
+      console.log('loading openAI recognition service');
       recognitionService = new WhisperRecognitionService();
       break;
   }
