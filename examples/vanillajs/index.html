@@ -3,9 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <title>Recognition Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <body>
   <h1>Speech to Text minimal example</h1>
+  <div x-data="{ recognitonImpl: 'web' }">
+    <select id="select-implementation" x-model="recognitonImpl">
+      <option value="web">Web</option>
+      <option value="vosklet">Vosklet</option>
+      <option value="vosk">Vosk</option>
+      <option value="whisper">Whisper</option>
+    </select>
+    <button onclick="loadImplementation()">Load Implementation</button>
+    <pre x-text="recognitonImpl"></pre>
+  </div>
   <button onclick="initRecognition()">Start</button>
   <script type="module" src="/main.ts"></script>
 </body>

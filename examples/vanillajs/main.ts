@@ -1,9 +1,17 @@
 
+import type { RecognitionService } from 'speech-utils/recognitionService/interface.ts';
 import { WebRecognitionService } from 'speech-utils/recognitionService/webRecognitionService.ts';
+import { VoskletRecognitionService } from 'speech-utils/recognitionService/voskletRecognitionService.ts';
+import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.ts';
+// import { init } from 'speech-utils/recognitionService/voskBrowserRecognition.ts';
 
-console.log('hello from main.ts');
+
+let recognitionService: RecognitionService | undefined;
 function init() {
-  const recognitionService = new WebRecognitionService({lang: 'sv-SE'});
+  if (!recognitionService) {
+    console.error('no recognitionService implementation loaded');
+    return;
+  }
   recognitionService.onError((error) => {
     console.error('Speech Recognition error', error);
   });
@@ -16,5 +24,31 @@ function init() {
   })
 }
 
+type SelectOption = 'web' | 'vosklet' | 'vosk' | 'whisper';
+function loadImplementation() {
+  if (recognitionService) {
+    recognitionService.stopListenAudio();
+  }
+  // get current value
+  const recognitonImpl = document.querySelector<HTMLSelectElement>('#select-implementation')?.value as SelectOption | null;
+  switch (recognitonImpl) {
+    case 'web':
+      console.log('loading web recognition service');
+      recognitionService = new WebRecognitionService();
+      break;
+    case 'vosklet':
+      console.log('loading vosklet recognition service');
+      recognitionService = new VoskletRecognitionService();
+      break;
+    case 'vosk':
+      break;
+    case 'whisper':
+      console.log('loading whisper recognition service');
+      recognitionService = new WhisperRecognitionService();
+      break;
+  }
+}
 
-(window as any).initRecognition = init
+
+(window as any).initRecognition = init;
+(window as any).loadImplementation = loadImplementation;
