@@ -26,6 +26,15 @@ export type VADState = 'speaking' | 'idle';
 export type VADOverrideState = 'unset' | VADState;
 export interface RecognitionService {
   /**
+   * Initialize/setup the recognition service. Implement this function if the underlying api requires
+   * async initialization that can't be done in the constructor
+   */
+  initialize?(): Promise<void>;
+  /**
+   * dispose the recognition service and releases any resources it holds
+   */
+  dispose?(): Promise<void>;
+  /**
    * 
    * Attach callback to get any error happening within this recognition implementation
    */

@@ -1,16 +1,17 @@
 <template>
   <div class="flex flex-col gap-6 p-40 items-center h-screen">
     <div class="shrink flex gap-6">
-      <!-- <UButton class="w-40" variant="subtle" :color="listening ? 'error' : 'primary'"
-        @click="listening ? stopListening() : startListening()">{{ listening ? 'Stop' : 'Start' }}
+      <UButton class="w-40" variant="subtle" :color="listening ? 'error' : 'primary'"
+        @click="listening ? recognition.stopListenAudio() : recognition.startListenAudio()">{{ listening ? 'Stop' :
+          'Start' }}
         recognition
         <template #leading>
           <UIcon class="size-6" name="i-lucide-mic" :class="{ 'animate-pulse': listening }" />
         </template>
-      </UButton> -->
-      <UButton @click="init()">init</UButton>
+      </UButton>
+      <!-- <UButton @click="init()">init</UButton>
       <UButton @click="updateRms()">analyze</UButton>
-      {{ currentRms }}
+      {{ currentRms }} -->
     </div>
     <div class="max-w-xl">
       <p :class="{ 'font-bold': isFinalTranscript }">
@@ -22,14 +23,17 @@
 
 <script lang="ts" setup>
 
-import { onRMSUpdate, getCurrentRMS, init } from 'speech-utils/recognitionService/voskBrowserRecognition.js';
-const currentRms = ref(0);
-onRMSUpdate((rms) => {
-  currentRms.value = rms;
-})
-function updateRms() {
-  currentRms.value = getCurrentRMS();
-}
+import { onRMSUpdate, getCurrentRMS, VoskBrowserRecognitionService } from 'speech-utils/recognitionService/voskBrowserRecognition.js';
+const recognition = new VoskBrowserRecognitionService();
+recognition.initialize();
+
+// const currentRms = ref(0);
+// onRMSUpdate((rms) => {
+//   currentRms.value = rms;
+// })
+// function updateRms() {
+//   currentRms.value = getCurrentRMS();
+// }
 // const response = await init()
 
 const listening = ref(false);
@@ -43,20 +47,20 @@ const listening = ref(false);
 
 const currentTranscript = ref('');
 const isFinalTranscript = ref(false);
-// recognition.onTextReceived((text) => {
-//   console.log(text);
-//   isFinalTranscript.value = true;
-//   currentTranscript.value = text;
-// })
-// recognition.onInterimTextReceived((text) => {
-//   console.log(text);
-//   isFinalTranscript.value = false;
-//   currentTranscript.value = text;
-// })
+recognition.onTextReceived((text) => {
+  console.log(text);
+  isFinalTranscript.value = true;
+  currentTranscript.value = text;
+})
+recognition.onInterimTextReceived((text) => {
+  console.log(text);
+  isFinalTranscript.value = false;
+  currentTranscript.value = text;
+})
 
-// recognition.onListeningStateChanged((state) => {
-//   listening.value = state === 'listening' ? true : false;
-// })
+recognition.onListeningStateChanged((state) => {
+  listening.value = state === 'listening' ? true : false;
+})
 
 </script>
 
