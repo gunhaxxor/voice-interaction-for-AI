@@ -3,7 +3,7 @@ import type { RecognitionService } from 'speech-utils/recognitionService/interfa
 import { WebRecognitionService } from 'speech-utils/recognitionService/webRecognitionService.ts';
 import { VoskletRecognitionService } from 'speech-utils/recognitionService/voskletRecognitionService.ts';
 import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.ts';
-// import { init } from 'speech-utils/recognitionService/voskBrowserRecognition.ts';
+import { VoskBrowserRecognitionService } from 'speech-utils/recognitionService/voskBrowserRecognition.ts';
 
 
 let recognitionService: RecognitionService | undefined;
@@ -41,12 +41,14 @@ function loadImplementation() {
       recognitionService = new VoskletRecognitionService();
       break;
     case 'vosk':
+      recognitionService = new VoskBrowserRecognitionService();
       break;
     case 'whisper':
       console.log('loading openAI recognition service');
       recognitionService = new WhisperRecognitionService();
       break;
   }
+  recognitionService?.initialize?.();
 }
 
 
