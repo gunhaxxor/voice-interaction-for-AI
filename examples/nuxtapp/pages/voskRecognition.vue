@@ -8,7 +8,9 @@
           <UIcon class="size-6" name="i-lucide-mic" :class="{ 'animate-pulse': listening }" />
         </template>
       </UButton> -->
-      <!-- <UButton @click="recognition.stopListenAudio(); started = false">Stop listening</UButton> -->
+      <UButton @click="init()">init</UButton>
+      <UButton @click="updateRms()">analyze</UButton>
+      {{ currentRms }}
     </div>
     <div class="max-w-xl">
       <p :class="{ 'font-bold': isFinalTranscript }">
@@ -20,8 +22,15 @@
 
 <script lang="ts" setup>
 
-import { init } from 'speech-utils/recognitionService/voskBrowserRecognition.js';
-const response = await init()
+import { onRMSUpdate, getCurrentRMS, init } from 'speech-utils/recognitionService/voskBrowserRecognition.js';
+const currentRms = ref(0);
+onRMSUpdate((rms) => {
+  currentRms.value = rms;
+})
+function updateRms() {
+  currentRms.value = getCurrentRMS();
+}
+// const response = await init()
 
 const listening = ref(false);
 // async function startListening() {
