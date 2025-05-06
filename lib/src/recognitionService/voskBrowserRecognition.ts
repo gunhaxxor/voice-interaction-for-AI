@@ -14,14 +14,15 @@ export async function init() {
 
     const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: false,
-        audio: true,
-        // audio: {
-        //     echoCancellation: true,
-        //     noiseSuppression: true,
-        //     channelCount: 1,
-        //     sampleRate: 16000
-        // },
+        // audio: true,
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+            sampleRate: 16000
+        },
     });
+
     const audioContext = new AudioContext({
         sinkId: { type: 'none' }
     });
@@ -56,9 +57,6 @@ async function createAnalyser(stream: MediaStream) {
 
     source.connect(analyser);
 
-    // Wait briefly to allow audio to flow
-    // await new Promise(resolve => setTimeout(resolve, 200));
-    //
     setInterval(() => {
         analyser.getByteTimeDomainData(dataArray);
         // Compute RMS (root mean square) to see if there's any signal
