@@ -152,18 +152,21 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
 
       const cache = await this.vosklet.getModelCache();
       console.log('model cache', cache);
+
     };
     if (!this.voskModel) {
       console.log('creating vosk model');
       this.lang = options?.lang || 'en-US';
       // const modelUrl = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz'
       // this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'vosk-model-small-en-us-0.15');
-      
-      const modelUrl = `${window.location.origin}/vosk-model-small-en-us-0.15.tar.gz`
+
+      const modelUrl = `${window.location.origin}/models/vosk-model-small-en-us-0.15.tar.gz`
       console.log(modelUrl);
       this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'local---vosk-model-small-en-us-0.15');
 
-      // const modelUrl = `${window.location.origin}/vosk-model-small-sv-rhasspy-0.15.tar.gz`
+      this.vosklet.getModelCache().then(cache => console.log('model cache', cache));
+
+      // const modelUrl = `${window.location.origin}/models/vosk-model-small-sv-rhasspy-0.15.tar.gz`
       // console.log(modelUrl);
       // this.voskModel = await this.vosklet.createModel(modelUrl, 'swedish', 'vosk-model-small-sv-rhasspy-0.15');
     }
