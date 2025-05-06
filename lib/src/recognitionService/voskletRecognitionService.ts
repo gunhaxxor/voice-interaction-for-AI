@@ -67,10 +67,10 @@ interface VoskCache {
 
 }
 
-interface VoskTransferer extends AudioNode {
-  port: {
-    onmessage: (ev: MessageEvent) => void
-  }
+interface VoskTransferer extends AudioWorkletNode {
+  // port: {
+  //   onmessage: (ev: MessageEvent) => void
+  // }
 }
 
 interface VoskletModule {
@@ -164,11 +164,12 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
       console.log(modelUrl);
       this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'local---vosk-model-small-en-us-0.15');
 
-      this.vosklet.getModelCache().then(cache => console.log('model cache', cache));
 
       // const modelUrl = `${window.location.origin}/models/vosk-model-small-sv-rhasspy-0.15.tar.gz`
       // console.log(modelUrl);
       // this.voskModel = await this.vosklet.createModel(modelUrl, 'swedish', 'vosk-model-small-sv-rhasspy-0.15');
+
+      this.vosklet.getModelCache().then(cache => console.log('model cache', cache));
     }
     if (!this.voskRecognizer) {
       console.log('creating vosk recognizer');
@@ -183,6 +184,10 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
       this.voskTransferer.port.onmessage = ev => this.voskRecognizer?.acceptWaveform(ev.data);
       
       this.micNode.connect(this.voskTransferer);
+      console.log(this.voskTransferer);
+      console.log(this.voskTransferer instanceof AudioWorkletNode);
+      // this.micNode.connect(this.ctx.destination);
+      // this.voskTransferer.connect(this.ctx.destination);
     }
     this.setListeningState('listening');
 
