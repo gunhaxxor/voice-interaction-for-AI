@@ -152,6 +152,7 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
       // this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'vosk-model-small-en-us-0.15');
 
       const modelUrl = `${window.location.origin}/models/vosk-model-small-en-us-0.15.tar.gz`
+      // const modelUrl = `/models/vosk-model-small-en-us-0.15.tar.gz`
       console.log(modelUrl);
       this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'local---vosk-model-small-en-us-0.15');
 
