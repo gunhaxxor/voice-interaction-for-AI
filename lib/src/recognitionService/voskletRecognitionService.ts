@@ -93,6 +93,9 @@ interface VoskletModule {
    *  3: Debug
    */
   setLogLevel(lvl: number): void;
+  /**
+   * A convenience function that call delete() on all objects and revoke all URLs. Run this when you're done!
+   */
   cleanUp(): Promise<void>;
   getModelCache(): Promise<VoskCache>
   // EpMode:
@@ -102,6 +105,7 @@ interface VoskletModule {
 
 export class VoskletRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
   private ctx: AudioContext;
+  private micStream?: MediaStream;
   private micNode?: MediaStreamAudioSourceNode;
   private vosklet?: VoskletModule;
   private voskModel?: VoskModel;
@@ -127,23 +131,10 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
   }
 
   async startListenAudio(options?: RecognitionServiceListenOptions) {
+    await this.ctx.resume();
     if(!this.serviceLoaded) {
       console.log('loading service');
       await this.load();
-    }
-    if (!this.micNode) {
-      console.log('creating mic node');
-      const micStream = await navigator.mediaDevices.getUserMedia({
-        video: false,
-        audio: true
-      });
-      
-      // There seems to be some error if the micstream isnt ready before continuing.
-      // TODO: Find out how we can react or get an event when stream is ready.
-      await new Promise((resolve) => {
-        setTimeout(resolve, 1000);
-      })
-      this.micNode = this.ctx.createMediaStreamSource(micStream)
     }
     if (!this.vosklet) {
       console.log('loading vosklet (module)');
@@ -182,12 +173,20 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
       console.log('creating vosk transferer');
       this.voskTransferer = await this.vosklet.createTransferer(this.ctx, 128 * 150);
       this.voskTransferer.port.onmessage = ev => this.voskRecognizer?.acceptWaveform(ev.data);
-      
-      this.micNode.connect(this.voskTransferer);
+
       console.log(this.voskTransferer);
       console.log(this.voskTransferer instanceof AudioWorkletNode);
       // this.micNode.connect(this.ctx.destination);
       // this.voskTransferer.connect(this.ctx.destination);
+    }
+    if (!this.micNode) {
+      console.log('creating mic node');
+      this.micStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: true
+      });
+      this.micNode = this.ctx.createMediaStreamSource(this.micStream)
+      this.micNode.connect(this.voskTransferer);
     }
     this.setListeningState('listening');
 
@@ -196,15 +195,21 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
   async stopListenAudio() {
     if(this.voskRecognizer) {
       await this.voskRecognizer.delete();
+      this.voskRecognizer = undefined;
     }
-    if(this.voskModel) {
-      await this.voskModel.delete();
-    }
+    // if(this.voskModel) {
+    //   await this.voskModel.delete();
+    // }
     if(this.vosklet) {
-      await this.vosklet.cleanUp();
+      // await this.vosklet.cleanUp();
     }
     if(this.micNode) {
       this.micNode.disconnect();
+      this.micNode = undefined;
+    }
+    if (this.micStream) {
+      this.micStream.getTracks().forEach(track => track.stop());
+      this.micStream = undefined;
     }
 
     this.setListeningState('inactive');
