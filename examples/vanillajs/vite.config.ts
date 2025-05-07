@@ -7,5 +7,5 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp'
     }
   },
-  publicDir: '../nuxtapp/public',
+  publicDir: '../public',
 });
