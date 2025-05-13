@@ -8,24 +8,27 @@ import type { PossibleLanguagesISO6391 } from "../utilityTypes";
 export interface WhisperRecognitionServiceOptions extends RecognitionServiceListenOptions {
   url?: string,
   key?: string,
+  model?: string,
   lang?: PossibleLanguagesISO6391
 }
 
 export class WhisperRecognitionService implements RecognitionService {
-  private options?: WhisperRecognitionServiceOptions;
+  private options: WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
 
   constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
-    if (options instanceof OpenAI) {
-      this.openai = options;
-      return;
-    }
-
     const defaultOptions: WhisperRecognitionServiceOptions = {
       url: 'https://api.openai.com/v1/',
       key: 'nokeyset',
+      model: 'KBLab/kb-whisper-medium',
     }
+    if (options instanceof OpenAI) {
+      this.openai = options;
+      this.options = defaultOptions;
+      return;
+    }
+
     this.options = { ...defaultOptions, ...options }
 
     this.openai = new OpenAI({
@@ -39,12 +42,16 @@ export class WhisperRecognitionService implements RecognitionService {
     const wavBuffer = utils.encodeWAV(audio);
 
     const file = await toFile(wavBuffer);
+
     const text = await this.openai.audio.transcriptions.create({
       model: 'KBLab/kb-whisper-medium',
+      // model: 'Systran/faster-whisper-large-v3',
+      // model: 'Systran/faster-whisper-medium',
+      // model: 'deepdml/faster-distil-whisper-large-v3.5',
       file,
       stream: true,
       language: this.options.lang
-    })
+    });
     for await (const chunk of text) {
       if (chunk.type === 'transcript.text.delta') {
         console.log('delta transcript received');
