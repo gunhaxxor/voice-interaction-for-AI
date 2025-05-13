@@ -129,7 +129,7 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
   }
   
   private serviceLoaded = false;
-  async load() {
+  async initialize() {
     if(this.serviceLoaded) {
       return;
     }
@@ -141,7 +141,7 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
     await this.ctx.resume();
     if(!this.serviceLoaded) {
       console.log('loading service');
-      await this.load();
+      await this.initialize();
     }
     if (!this.vosklet) {
       console.log('loading vosklet (module)');

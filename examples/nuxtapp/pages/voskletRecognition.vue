@@ -26,7 +26,7 @@ const recognition = new VoskletRecognitionService({
 });
 
 onMounted(() => {
-  recognition.load();
+  recognition.initialize();
 })
 
 const listening = ref(false);

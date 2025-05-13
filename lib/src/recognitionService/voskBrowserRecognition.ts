@@ -110,6 +110,10 @@ export class VoskBrowserRecognitionService extends RecognitionServiceCallbackHan
         this.setListeningState('inactive')
     }
 
+    supportsVADState(): boolean {
+        return false;
+    }
+
     async dispose() {
         this.recognizer?.remove();
         this.model?.terminate();
