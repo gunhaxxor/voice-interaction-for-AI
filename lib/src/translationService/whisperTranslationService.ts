@@ -1,28 +1,31 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type RecognitionService, type RecognitionServiceListenOptions } from "./interface";
+import { type RecognitionService, type RecognitionServiceListenOptions } from "../recognitionService/interface";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
 import type { PossibleLanguagesISO6391, StringWithSuggestedLiterals } from "../utilityTypes";
 
-export interface WhisperRecognitionServiceOptions extends RecognitionServiceListenOptions {
+export interface WhisperTranslationServiceOptions extends Omit<RecognitionServiceListenOptions, 'lang'> {
   url?: string,
   key?: string,
-  model?: StringWithSuggestedLiterals<'KBLab/kb-whisper-medium' | 'KBLab/kb-whisper-large' | 'Systran/faster-whisper-medium' | 'whisper-1'>,
-  lang?: PossibleLanguagesISO6391
+  model?: StringWithSuggestedLiterals<'Systran/faster-whisper-large-v3' | 'Systran/faster-whisper-medium' | 'whisper-1'>,
 }
 
-export class WhisperRecognitionService implements RecognitionService {
-  private options: WhisperRecognitionServiceOptions;
+/**
+ * Translates audio into english text. 
+ **/
+export class WhisperTranslationService implements RecognitionService {
+  private options: WhisperTranslationServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
 
-  constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
-    const defaultOptions: WhisperRecognitionServiceOptions = {
+  constructor(options?: WhisperTranslationServiceOptions | OpenAI) {
+    const defaultOptions: WhisperTranslationServiceOptions = {
       url: 'https://api.openai.com/v1/',
       key: 'nokeyset',
-      model: 'KBLab/kb-whisper-medium',
+      model: 'Systran/faster-whisper-large-v3',
     }
+
     if (options instanceof OpenAI) {
       this.openai = options;
       this.options = defaultOptions;
@@ -37,28 +40,26 @@ export class WhisperRecognitionService implements RecognitionService {
       baseURL: this.options.url,
     })
   }
-  
+
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
-    const wavBuffer = utils.encodeWAV(audio);
+    try {
 
-    const file = await toFile(wavBuffer);
+      const wavBuffer = utils.encodeWAV(audio);
 
-    const text = await this.openai.audio.transcriptions.create({
-      model: this.options.model!,
-      // model: 'Systran/faster-whisper-large-v3',
-      // model: 'Systran/faster-whisper-medium',
-      // model: 'deepdml/faster-distil-whisper-large-v3.5',
-      file,
-      stream: true,
-      language: this.options.lang
-    });
-    for await (const chunk of text) {
-      if (chunk.type === 'transcript.text.delta') {
-        console.log('delta transcript received');
-        this.interimTextReceivedHandler?.(chunk.delta);
-      } else {
-        this.textReceivedHandler?.(chunk.text);
-      }
+      const file = await toFile(wavBuffer);
+
+      const text = await this.openai.audio.translations.create({
+        model: this.options.model!,
+        // model: 'Systran/faster-whisper-large-v3',
+        // model: 'Systran/faster-whisper-medium',
+        // model: 'deepdml/faster-distil-whisper-large-v3.5',
+        // model: 'KBLab/kb-whisper-medium',
+        file,
+      });
+
+      this.textReceivedHandler?.(text.text);
+    } catch (error) {
+      this.errorHandler?.(error as Error);
     }
   }
   // private interimRawAudio: Array<number> = [];
@@ -69,37 +70,45 @@ export class WhisperRecognitionService implements RecognitionService {
     //   this.interimRawAudio.push(val);
     // }
 
-    if(!this.vad) return;
+    if (!this.vad) return;
     if (probs.isSpeech > this.vad?.options.positiveSpeechThreshold) {
       this.setInputSpeechState('speaking');
     } else {
       this.setInputSpeechState('idle');
     }
   }
-  async startListenAudio(options?: RecognitionServiceListenOptions){
-    this.vad = await MicVAD.new({
-      model: 'v5',
-      frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs
-      // frames to wait before triggering endSpeech
-      redemptionFrames: 6,
-      minSpeechFrames: 2,
-      onSpeechStart() {
-        console.log('speech start');
-      },
-      onSpeechEnd: this.VADonSpeechEndHandler,
-      onFrameProcessed: this.VADonFramesProcessedHandler,
-    });
 
+  async startListenAudio(options?: RecognitionServiceListenOptions) {
+    try {
+      this.vad = await MicVAD.new({
+        model: 'v5',
+        frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs
+        // frames to wait before triggering endSpeech
+        redemptionFrames: 6,
+        minSpeechFrames: 2,
+        onSpeechStart() {
+          console.log('speech start');
+        },
+        onSpeechEnd: this.VADonSpeechEndHandler,
+        onFrameProcessed: this.VADonFramesProcessedHandler,
+      });
 
-    this.vad.start();
-    this.setListeningState('listening');
+      this.vad.start();
+      this.setListeningState('listening');
+    } catch (error: unknown) {
+      this.errorHandler?.(error as Error);
+    }
   }
-  
+
   stopListenAudio(): void {
-    this.vad?.destroy();
-    this.setListeningState('inactive')
+    try {
+      this.vad?.destroy();
+      this.setListeningState('inactive')
+    } catch (error: unknown) {
+      this.errorHandler?.(error as Error);
+    }
   }
-  
+
   private listeningState: "listening" | "inactive" = "inactive"
   private setListeningState(state: "listening" | "inactive"): void {
     this.listeningState = state;
@@ -113,7 +122,7 @@ export class WhisperRecognitionService implements RecognitionService {
   onListeningStateChanged(handler?: ((state: "listening" | "inactive") => void)): void {
     this.listeningStateChangedHandler = handler;
   }
-  
+
   private inputSpeechState: "speaking" | "idle" = "idle"
   getVADState(): "speaking" | "idle" {
     return this.inputSpeechState
@@ -128,20 +137,20 @@ export class WhisperRecognitionService implements RecognitionService {
   onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
     this.inputSpeechStateChangedHandler = handler;
   }
-  
+
   private textReceivedHandler?: ((text: string) => void)
   onTextReceived(handler?: ((text: string) => void)): void {
     this.textReceivedHandler = handler;
   }
-  
+
   private interimTextReceivedHandler?: ((text: string) => void)
   onInterimTextReceived(handler?: ((text: string) => void)): void {
     this.interimTextReceivedHandler = handler;
   }
-  
+
   private errorHandler?: (error: Error) => void
   onError(errorHandler: (error: Error) => void): void {
     this.errorHandler = errorHandler;
   }
-  
+
 }

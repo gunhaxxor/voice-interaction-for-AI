@@ -17,6 +17,8 @@
 
 <script lang="ts" setup>
 
+import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.js';
+
 const whisperRecogniton = new WhisperRecognitionService({
   url: 'http://localhost:8000/v1',
   key: 'speaches',

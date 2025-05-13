@@ -29,21 +29,22 @@ onStartTyping(() => {
   }
 })
 
-// const recognition = new WhisperRecognitionService({
-//   url: 'http://localhost:8000/v1/',
-//   lang: 'sv',
-// })
-
-import { WebRecognitionService } from 'speech-utils/recognitionService/webRecognitionService.js';
-const recognition = new WebRecognitionService({
-  lang: 'sv-SE',
+import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.js';
+const recognition = new WhisperRecognitionService({
+  url: 'http://localhost:8000/v1/',
+  lang: 'sv',
 })
-const currentListeningState = ref<ReturnType<WebRecognitionService['getListeningState']>>('inactive');
+
+// import { WebRecognitionService } from 'speech-utils/recognitionService/webRecognitionService.js';
+// const recognition = new WebRecognitionService({
+//   lang: 'sv-SE',
+// })
+const currentListeningState = ref<ReturnType<typeof recognition.getListeningState>>('inactive');
 recognition.onListeningStateChanged((state) => {
   console.log('listening state changed', state);
   currentListeningState.value = state;
 })
-const VADState = ref<ReturnType<WebRecognitionService['getVADState']>>('idle');
+const VADState = ref<ReturnType<typeof recognition.getVADState>>('idle');
 recognition.onVADStateChanged((state) => {
   console.log('input speech state changed', state);
   const prev = VADState.value;
