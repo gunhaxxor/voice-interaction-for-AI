@@ -27,10 +27,14 @@ export class kbWhisperlocal implements RecognitionService {
     if (!this.transcriber) {
       this.transcriber = await pipeline(
         'automatic-speech-recognition',
-        'KBLab/kb-whisper-small'
+        'KBLab/kb-whisper-small',
+        {
+          local_files_only: true
+        }
       );
     }
   }
+  
 
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     console.log('VAD detected end of speech, running Whisper...');
