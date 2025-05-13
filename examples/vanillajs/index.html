@@ -7,12 +7,16 @@
 </head>
 <body>
   <h1>Speech to Text minimal example</h1>
-  <div x-data="{ recognitonImpl: 'vosklet' }">
+  <div x-data="{ recognitonImpl: 'web' }">
     <select id="select-implementation" x-model="recognitonImpl">
       <option value="web">Web</option>
       <option value="vosklet">Vosklet</option>
       <option value="vosk">Vosk</option>
       <option value="whisper">Whisper</option>
+    </select>
+    <select id="select-language">
+      <option value="sv-SE">sv-SE</option>
+      <option value="en-US">en-US</option>
     </select>
     <button onclick="loadImplementation()">Load Implementation</button>
     <pre x-text="recognitonImpl"></pre>
