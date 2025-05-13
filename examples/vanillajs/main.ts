@@ -48,7 +48,13 @@ function loadImplementation() {
       });
       break;
     case 'vosk':
-      recognitionService = new VoskBrowserRecognitionService();
+      recognitionService = new VoskBrowserRecognitionService({
+        modelUrls: {
+          'sv': '/models/vosk-model-small-sv-rhasspy-0.15.tar.gz',
+          'en': '/models/vosk-model-small-en-us-0.15.tar.gz'
+        },
+        lang: selectedLang?.substring(0, 2),
+      });
       break;
     case 'whisper':
       console.log('loading openAI recognition service');

@@ -50,7 +50,7 @@ export class VoskBrowserRecognitionService extends RecognitionServiceCallbackHan
         this.recognizer.on("partialresult", (message) => {
             if (message.event !== 'partialresult') return
             this.interimTextReceivedHandler?.(message.result.partial);
-            console.log(`Partial result: ${message.result.partial}`);
+            // console.log(`Partial result: ${message.result.partial}`);
         });
 
     }
@@ -125,10 +125,10 @@ export async function init() {
 
     const recognizer = new model.KaldiRecognizer(16000);
     recognizer.on("result", (message) => {
-        console.log(`Result: ${message.result.text}`);
+        // console.log(`Result: ${message.result.text}`);
     });
     recognizer.on("partialresult", (message) => {
-        console.log(`Partial result: ${message.result.partial}`);
+        // console.log(`Partial result: ${message.result.partial}`);
     });
 
     const mediaStream = await navigator.mediaDevices.getUserMedia({
