@@ -103,6 +103,10 @@ interface VoskletModule {
   createTransferer(ctx: AudioContext, size: number): Promise<VoskTransferer>
 }
 
+interface VoskletRecognitionServiceOptions {
+  modelUrl: string,
+}
+
 export class VoskletRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
   private ctx: AudioContext;
   private micStream?: MediaStream;
@@ -112,13 +116,16 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
   private voskRecognizer?: VoskRecognizer;
   private voskTransferer?: VoskTransferer;
   private lang?: RecognitionServiceListenOptions['lang'];
-  constructor() {
+  private options: VoskletRecognitionServiceOptions;
+  constructor(options?: VoskletRecognitionServiceOptions) {
     super();
     this.ctx = new AudioContext({
       sinkId: { type: 'none' }
     } as AudioContextOptionsWithSinkId);
-
-
+    const defaultOptions: VoskletRecognitionServiceOptions = {
+      modelUrl: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz',
+    };
+    this.options = { ...defaultOptions, ...options };
   }
   
   private serviceLoaded = false;
@@ -151,10 +158,12 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
       // const modelUrl = 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz'
       // this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'vosk-model-small-en-us-0.15');
 
-      const modelUrl = `${window.location.origin}/models/vosk-model-small-en-us-0.15.tar.gz`
-      // const modelUrl = `/models/vosk-model-small-en-us-0.15.tar.gz`
+      // const modelUrl = `${window.location.origin}/models/vosk-model-small-en-us-0.15.tar.gz`
+      // const modelUrl = `/vosk-model-small-en-us-0.15.tar.gz`
+      const modelUrl = this.options.modelUrl
       console.log(modelUrl);
-      this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'local---vosk-model-small-en-us-0.15');
+      this.voskModel = await this.vosklet.createModel(modelUrl, modelUrl, modelUrl);
+      // this.voskModel = await this.vosklet.createModel(modelUrl, 'english', 'local---vosk-model-small-en-us-0.15');
 
 
       // const modelUrl = `${window.location.origin}/models/vosk-model-small-sv-rhasspy-0.15.tar.gz`
