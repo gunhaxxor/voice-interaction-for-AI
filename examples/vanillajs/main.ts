@@ -38,7 +38,10 @@ function loadImplementation() {
       break;
     case 'vosklet':
       console.log('loading vosklet recognition service');
-      recognitionService = new VoskletRecognitionService();
+      recognitionService = new VoskletRecognitionService({
+        modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+        // modelUrl: 'http://localhost:3000/models/vosk-model-small-en-us-0.15.tar.gz',
+      });
       break;
     case 'vosk':
       recognitionService = new VoskBrowserRecognitionService();

@@ -21,7 +21,13 @@
 <script lang="ts" setup>
 
 import { VoskletRecognitionService } from 'speech-utils/recognitionService/voskletRecognitionService.js';
-const recognition = new VoskletRecognitionService();
+const recognition = new VoskletRecognitionService({
+  modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+});
+
+onMounted(() => {
+  recognition.load();
+})
 
 const listening = ref(false);
 async function startListening() {
