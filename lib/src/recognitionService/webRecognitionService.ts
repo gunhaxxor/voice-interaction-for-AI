@@ -107,6 +107,12 @@ export class WebRecognitionService implements RecognitionService {
   }
 
 
+  // Unfortunately the browser api is not working correctly with the onSpeechStart and onSpeechEnd events.
+  // Thus VADState is not supported at the moment.
+  supportsVADState(): boolean {
+    return false;
+  }
+
   private VADState: VADState = 'idle';
   getVADState(): VADState {
     return this.VADState;

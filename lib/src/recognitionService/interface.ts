@@ -58,9 +58,12 @@ export interface RecognitionService {
    */
   onListeningStateChanged(handler?: ((state: ListeningState) => void)): void;
 
+  supportsVADState(): boolean;
+
   /**
    * VAD stands for Voice Activity Detection.
    * Represents whether the user is speaking or not.
+   * Check if the implementation supports Voice Activity Detection firs with `supportsVADState()`
    */
   getVADState?(): VADState;
 

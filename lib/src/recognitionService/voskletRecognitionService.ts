@@ -225,4 +225,9 @@ export class VoskletRecognitionService extends RecognitionServiceCallbackHandlin
     this.setListeningState('inactive');
   }
 
+  supportsVADState(): boolean {
+    return false;
+  }
+
+
 }

@@ -1,5 +1,5 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type RecognitionService, type RecognitionServiceListenOptions } from "./interface";
+import { type RecognitionService, type RecognitionServiceListenOptions, type VADState } from "./interface";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
@@ -71,9 +71,9 @@ export class WhisperRecognitionService implements RecognitionService {
 
     if(!this.vad) return;
     if (probs.isSpeech > this.vad?.options.positiveSpeechThreshold) {
-      this.setInputSpeechState('speaking');
+      this.setVADState('speaking');
     } else {
-      this.setInputSpeechState('idle');
+      this.setVADState('idle');
     }
   }
   async startListenAudio(options?: RecognitionServiceListenOptions){
@@ -114,19 +114,23 @@ export class WhisperRecognitionService implements RecognitionService {
     this.listeningStateChangedHandler = handler;
   }
   
-  private inputSpeechState: "speaking" | "idle" = "idle"
-  getVADState(): "speaking" | "idle" {
-    return this.inputSpeechState
+  supportsVADState(): boolean {
+    return true
   }
 
-  private setInputSpeechState(state: "speaking" | "idle"): void {
-    this.inputSpeechState = state;
-    this.inputSpeechStateChangedHandler?.(state);
+  private VADState: VADState = "idle"
+  getVADState(): VADState {
+    return this.VADState
   }
 
-  private inputSpeechStateChangedHandler?: ((state: "speaking" | "idle") => void)
-  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
-    this.inputSpeechStateChangedHandler = handler;
+  private setVADState(state: VADState): void {
+    this.VADState = state;
+    this.VADStateChangedHandler?.(state);
+  }
+
+  private VADStateChangedHandler?: ((state: VADState) => void)
+  onVADStateChanged(handler?: ((state: VADState) => void)): void {
+    this.VADStateChangedHandler = handler;
   }
   
   private textReceivedHandler?: ((text: string) => void)
