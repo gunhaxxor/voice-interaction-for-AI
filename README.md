@@ -12,3 +12,6 @@ To use local vosk models, make sure you have vosk models with tar.gz extensions 
 
 ## API
 The best way to learn the api of `RecognitonService` is to look at it's source code in [`lib/src/recognitionService/interface.ts`](lib/src/recognitionService/interface.ts). The API is commented with JSDOCs, which should also provide some hints from within your IDE.
+
+
+Martin was here
