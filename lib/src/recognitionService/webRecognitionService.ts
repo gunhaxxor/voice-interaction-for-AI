@@ -1,12 +1,17 @@
+import type { PossibleLanguagesBCP47 } from '../utilityTypes';
 import type { ListeningState, RecognitionService, RecognitionServiceListenOptions, VADState } from './interface';
 import * as RecognitionTypes from './recognitionTypes';
 
+interface WebRecognitionServiceListenOptions extends RecognitionServiceListenOptions {
+  lang?: PossibleLanguagesBCP47;
+}
+
 export class WebRecognitionService implements RecognitionService {
   private recognition: RecognitionTypes.SpeechRecognition;
-  private defaultListenOptions?: RecognitionServiceListenOptions;
+  private defaultListenOptions?: WebRecognitionServiceListenOptions;
   private listeningTargetState: ListeningState = 'inactive';
 
-  constructor(options?: RecognitionServiceListenOptions) {
+  constructor(options?: WebRecognitionServiceListenOptions) {
     this.defaultListenOptions = options;
     const SpeechRecognition = window && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
     if (!SpeechRecognition) {
@@ -26,7 +31,7 @@ export class WebRecognitionService implements RecognitionService {
       }
     };
   }
-  async startListenAudio(options?: RecognitionServiceListenOptions) {
+  async startListenAudio(options?: WebRecognitionServiceListenOptions) {
     this.listeningTargetState = 'listening';
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
@@ -106,6 +111,12 @@ export class WebRecognitionService implements RecognitionService {
     this.interimTextReceivedHandler = handler;
   }
 
+
+  // Unfortunately the browser api is not working correctly with the onSpeechStart and onSpeechEnd events.
+  // Thus VADState is not supported at the moment.
+  supportsVADState(): boolean {
+    return false;
+  }
 
   private VADState: VADState = 'idle';
   getVADState(): VADState {

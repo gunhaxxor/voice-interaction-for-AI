@@ -2,7 +2,7 @@ import { readFile, stat } from 'fs/promises'
 import { defineEventHandler, serveStatic } from 'h3'
 import { relative, resolve } from 'path'
 
-const modelsDir = resolve(process.cwd(), '../public/models')
+const modelsDir = resolve(process.cwd(), '../models')
 // console.log('modelsDir:', modelsDir);
 function secureResolve(base: string, path: string) {
   const cleanPath = path.replace(/^\/+/, ''); // remove leading slashes

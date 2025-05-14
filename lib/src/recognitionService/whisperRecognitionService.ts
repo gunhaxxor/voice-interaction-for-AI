@@ -1,31 +1,34 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type RecognitionService, type RecognitionServiceListenOptions } from "./interface";
+import { type RecognitionService, type RecognitionServiceListenOptions, type VADState } from "./interface";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
-import type { PossibleLanguagesISO6391 } from "../utilityTypes";
+import type { PossibleLanguagesISO6391, StringWithSuggestedLiterals } from "../utilityTypes";
 
 export interface WhisperRecognitionServiceOptions extends RecognitionServiceListenOptions {
   url?: string,
   key?: string,
+  model?: StringWithSuggestedLiterals<'KBLab/kb-whisper-medium' | 'KBLab/kb-whisper-large' | 'Systran/faster-whisper-medium' | 'whisper-1'>,
   lang?: PossibleLanguagesISO6391
 }
 
 export class WhisperRecognitionService implements RecognitionService {
-  private options?: WhisperRecognitionServiceOptions;
+  private options: WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
 
   constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
-    if (options instanceof OpenAI) {
-      this.openai = options;
-      return;
-    }
-
     const defaultOptions: WhisperRecognitionServiceOptions = {
       url: 'https://api.openai.com/v1/',
       key: 'nokeyset',
+      model: 'KBLab/kb-whisper-medium',
     }
+    if (options instanceof OpenAI) {
+      this.openai = options;
+      this.options = defaultOptions;
+      return;
+    }
+
     this.options = { ...defaultOptions, ...options }
 
     this.openai = new OpenAI({
@@ -39,12 +42,16 @@ export class WhisperRecognitionService implements RecognitionService {
     const wavBuffer = utils.encodeWAV(audio);
 
     const file = await toFile(wavBuffer);
+
     const text = await this.openai.audio.transcriptions.create({
-      model: 'KBLab/kb-whisper-medium',
+      model: this.options.model!,
+      // model: 'Systran/faster-whisper-large-v3',
+      // model: 'Systran/faster-whisper-medium',
+      // model: 'deepdml/faster-distil-whisper-large-v3.5',
       file,
       stream: true,
       language: this.options.lang
-    })
+    });
     for await (const chunk of text) {
       if (chunk.type === 'transcript.text.delta') {
         console.log('delta transcript received');
@@ -64,9 +71,9 @@ export class WhisperRecognitionService implements RecognitionService {
 
     if(!this.vad) return;
     if (probs.isSpeech > this.vad?.options.positiveSpeechThreshold) {
-      this.setInputSpeechState('speaking');
+      this.setVADState('speaking');
     } else {
-      this.setInputSpeechState('idle');
+      this.setVADState('idle');
     }
   }
   async startListenAudio(options?: RecognitionServiceListenOptions){
@@ -107,19 +114,23 @@ export class WhisperRecognitionService implements RecognitionService {
     this.listeningStateChangedHandler = handler;
   }
   
-  private inputSpeechState: "speaking" | "idle" = "idle"
-  getVADState(): "speaking" | "idle" {
-    return this.inputSpeechState
+  supportsVADState(): boolean {
+    return true
   }
 
-  private setInputSpeechState(state: "speaking" | "idle"): void {
-    this.inputSpeechState = state;
-    this.inputSpeechStateChangedHandler?.(state);
+  private VADState: VADState = "idle"
+  getVADState(): VADState {
+    return this.VADState
   }
 
-  private inputSpeechStateChangedHandler?: ((state: "speaking" | "idle") => void)
-  onVADStateChanged(handler?: ((state: "speaking" | "idle") => void)): void {
-    this.inputSpeechStateChangedHandler = handler;
+  private setVADState(state: VADState): void {
+    this.VADState = state;
+    this.VADStateChangedHandler?.(state);
+  }
+
+  private VADStateChangedHandler?: ((state: VADState) => void)
+  onVADStateChanged(handler?: ((state: VADState) => void)): void {
+    this.VADStateChangedHandler = handler;
   }
   
   private textReceivedHandler?: ((text: string) => void)

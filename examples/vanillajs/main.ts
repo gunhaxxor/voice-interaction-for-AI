@@ -7,6 +7,7 @@ import { VoskBrowserRecognitionService } from 'speech-utils/recognitionService/v
 
 
 let recognitionService: RecognitionService | undefined;
+let language = 'en-US';
 function init() {
   if (!recognitionService) {
     console.error('no recognitionService implementation loaded');
@@ -29,28 +30,48 @@ function loadImplementation() {
   if (recognitionService) {
     recognitionService.stopListenAudio();
   }
+  const selectedLang = document.querySelector<HTMLSelectElement>('#select-language')?.value;
   // get current value
   const recognitonImpl = document.querySelector<HTMLSelectElement>('#select-implementation')?.value as SelectOption | null;
   switch (recognitonImpl) {
     case 'web':
       console.log('loading web recognition service');
-      recognitionService = new WebRecognitionService();
+      recognitionService = new WebRecognitionService({
+        lang: selectedLang
+      });
       break;
     case 'vosklet':
       console.log('loading vosklet recognition service');
-      recognitionService = new VoskletRecognitionService();
+      recognitionService = new VoskletRecognitionService({
+        modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+        // modelUrl: 'http://localhost:3000/models/vosk-model-small-en-us-0.15.tar.gz',
+      });
       break;
     case 'vosk':
-      recognitionService = new VoskBrowserRecognitionService();
+      recognitionService = new VoskBrowserRecognitionService({
+        modelUrls: {
+          'sv': '/models/vosk-model-small-sv-rhasspy-0.15.tar.gz',
+          'en': '/models/vosk-model-small-en-us-0.15.tar.gz'
+        },
+        lang: selectedLang?.substring(0, 2),
+      });
       break;
     case 'whisper':
       console.log('loading openAI recognition service');
-      recognitionService = new WhisperRecognitionService();
+      recognitionService = new WhisperRecognitionService({
+        url: 'http://localhost:8000/v1',
+        key: 'speaches',
+        lang: selectedLang?.substring(0, 2),
+        model: 'Systran/faster-whisper-large-v3'
+      });
       break;
   }
   recognitionService?.initialize?.();
 }
 
+// (window as any).setLanguage = (lang: string) => {
+//   language = lang;
+// }
 
 (window as any).initRecognition = init;
 (window as any).loadImplementation = loadImplementation;
