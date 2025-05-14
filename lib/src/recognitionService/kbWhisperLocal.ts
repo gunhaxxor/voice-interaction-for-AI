@@ -27,9 +27,6 @@ export class kbWhisperlocal implements RecognitionService {
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
       'KBLab/kb-whisper-small',
-      {
-        local_files_only: true
-      }
     );
   }
   
