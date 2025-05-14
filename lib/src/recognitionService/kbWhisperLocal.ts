@@ -36,7 +36,6 @@ export class kbWhisperlocal implements RecognitionService {
 
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     console.log('VAD detected end of speech, running Whisper...');
-    await this.loadTranscriber();
     const wavBuffer = utils.encodeWAV(audio);
     const result = await this.transcriber(wavBuffer, {
       chunk_length_s: 30,
@@ -70,6 +69,9 @@ export class kbWhisperlocal implements RecognitionService {
     this.vad.start();
     this.setListeningState('listening');
     console.log('Microphone listening started');
+    if(!this.transcriber) {
+      await this.loadTranscriber();
+    }
   }
 
   stopListenAudio(): void {
