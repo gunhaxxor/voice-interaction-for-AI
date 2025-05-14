@@ -24,15 +24,13 @@ export class kbWhisperlocal implements RecognitionService {
   }
 
   private async loadTranscriber() {
-    if (!this.transcriber) {
-      this.transcriber = await pipeline(
-        'automatic-speech-recognition',
-        'KBLab/kb-whisper-small',
-        {
-          local_files_only: true
-        }
-      );
-    }
+    this.transcriber = await pipeline(
+      'automatic-speech-recognition',
+      'KBLab/kb-whisper-small',
+      {
+        local_files_only: true
+      }
+    );
   }
   
 
