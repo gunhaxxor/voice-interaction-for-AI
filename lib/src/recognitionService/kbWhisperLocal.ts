@@ -2,7 +2,7 @@ import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
 import {
   type RecognitionService,
   type RecognitionServiceListenOptions
-} from './recognitionService/interface';
+} from './interface';
 
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import { pipeline } from '@xenova/transformers';
@@ -97,6 +97,10 @@ export class kbWhisperlocal implements RecognitionService {
   private setInputSpeechState(state: "speaking" | "idle") {
     this.inputSpeechState = state;
     this.inputSpeechStateChangedHandler?.(state);
+  }
+  
+  supportsVADState(): boolean {
+    return true;
   }
 
   getVADState(): "speaking" | "idle" {
