@@ -14,7 +14,7 @@ export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
 export class kbWhisperlocal implements RecognitionService {
   private options?: kbWhisperLocalOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
-  private transcriber?: any;
+  private transcriber?: Awaited<ReturnType<typeof pipeline>>;
 
   private listeningState: "listening" | "inactive" = "inactive";
   private inputSpeechState: "speaking" | "idle" = "idle";
@@ -27,8 +27,8 @@ export class kbWhisperlocal implements RecognitionService {
     env.allowLocalModels = false;
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
-      // 'Xenova/whisper-tiny',
-      'KBLab/kb-whisper-small',
+      'Xenova/whisper-tiny',
+      // 'KBLab/kb-whisper-small',
       // {
       //   local_files_only: false,
       // }

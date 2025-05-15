@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal'
+import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.js'
 
 const transcribedText = ref('Ingen text ännu...')
-const whisper = new kbWhisperlocal()
+const whisper = new kbWhisperlocal({ lang: 'en' })
 
 
 onMounted(() => {
