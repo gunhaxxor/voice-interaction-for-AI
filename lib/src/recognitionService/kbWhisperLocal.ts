@@ -5,7 +5,7 @@ import {
 } from './interface';
 
 import { MicVAD, utils } from '@ricky0123/vad-web';
-import { pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
 
 export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
   lang?: string;
@@ -24,15 +24,24 @@ export class kbWhisperlocal implements RecognitionService {
   }
 
   private async loadTranscriber() {
+    env.allowLocalModels = false;
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
+      // 'Xenova/whisper-tiny',
       'KBLab/kb-whisper-small',
+      // {
+      //   local_files_only: false,
+      // }
     );
   }
   
 
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     console.log('VAD detected end of speech, running Whisper...');
+    if (!this.transcriber) {
+      console.error('Transcriber not loaded, call loadTranscriber() first');
+      return;
+    }
     const wavBuffer = utils.encodeWAV(audio);
     const result = await this.transcriber(wavBuffer, {
       chunk_length_s: 30,
