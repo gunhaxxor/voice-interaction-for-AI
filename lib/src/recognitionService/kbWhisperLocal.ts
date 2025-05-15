@@ -5,7 +5,7 @@ import {
 } from './interface';
 
 import { MicVAD, utils } from '@ricky0123/vad-web';
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 
 export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
   lang?: string;

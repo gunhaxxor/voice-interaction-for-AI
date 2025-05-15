@@ -6,6 +6,7 @@ const transcribedText = ref('Ingen text ännu...')
 const whisper = new kbWhisperlocal({ lang: 'en' })
 
 
+
 onMounted(() => {
   whisper.onTextReceived((text: string) => {
     transcribedText.value = text || 'Ingen text kunde höras...!'
