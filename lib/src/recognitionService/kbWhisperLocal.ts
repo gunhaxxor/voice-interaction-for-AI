@@ -28,35 +28,70 @@ export class kbWhisperlocal implements RecognitionService {
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
       // 'Xenova/whisper-tiny',
-      'KBLab/kb-whisper-tiny',
+      'KBLab/kb-whisper-small',
       {
         // local_files_only: false,
-        dtype: 'q8',
-        // device: 'webgpu',
+        dtype: 'q4',
+        device: 'webgpu',
       }
     ) 
   }
   
-  // TODO: Find a way to handle that whisper doesnt like short audio input, like one word or such.
-  private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
-    console.log('VAD detected end of speech, running Whisper...');
+  private aggregateAudioBuffer: Float32Array<ArrayBufferLike> | undefined;
+  addToAggregateAudioBuffer(audio: Float32Array<ArrayBufferLike>) {
+    if (!this.aggregateAudioBuffer) {
+      this.aggregateAudioBuffer = audio;
+    } else {
+      const tempArray = new Float32Array(this.aggregateAudioBuffer.length + audio.length);
+      tempArray.set(this.aggregateAudioBuffer, 0);
+      tempArray.set(audio, this.aggregateAudioBuffer.length);
+      this.aggregateAudioBuffer = tempArray;
+    }
+    return this.aggregateAudioBuffer;
+  }
+
+  private whisperIsBusy = false;
+  async processAggregateAudioBuffer() {
+    if (!this.aggregateAudioBuffer) return;
     if (!this.transcriber) {
       console.error('Transcriber not loaded, call loadTranscriber() first');
       return;
     }
-    // const wavBuffer = utils.encodeWAV(audio);
-    // const arr = new Float16Array(wavBuffer);
-    const result = await this.transcriber(audio, {
-      chunk_length_s: 30,
+    console.log('Processing aggregate audio buffer');
+    this.whisperIsBusy = true;
+    const toTranscription = this.aggregateAudioBuffer;
+    this.aggregateAudioBuffer = undefined;
+    const result = await this.transcriber(toTranscription, {
+      chunk_length_s: 10,
+      stride_length_s: 3,
       return_timestamps: false,
       language: this.options?.lang || 'sv'
     });
     console.log('Transcription result:', result);
-    if (!result || Array.isArray(result)) {
-      console.error('eeeeeh. what?');
+    if (!result) {
+      console.error('No result from whisper');
       return;
     }
-    this.textReceivedHandler?.(result.text);
+    if (Array.isArray(result)) {
+      result.forEach((r) => {
+        this.textReceivedHandler?.(r.text);
+      })
+    } else {
+      this.textReceivedHandler?.(result.text);
+    }
+    this.whisperIsBusy = false;
+    if (this.aggregateAudioBuffer) {
+      await this.processAggregateAudioBuffer();
+    }
+  }
+  // TODO: Find a way to handle that whisper doesnt like short audio input, like one word or such.
+  private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
+    console.log('VAD detected end of speech');
+    this.addToAggregateAudioBuffer(audio);
+    if (!this.whisperIsBusy) {
+      await this.processAggregateAudioBuffer();
+    }
+
   }
 
   private VADonFramesProcessedHandler = (probs: SpeechProbabilities) => {
