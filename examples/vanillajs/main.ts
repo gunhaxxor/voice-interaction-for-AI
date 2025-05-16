@@ -9,7 +9,13 @@ import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.j
 
 let recognitionService: RecognitionService | undefined;
 let language = 'en-US';
+let transcriptsDiv: HTMLDivElement | undefined;
 function init() {
+  // transcriptsDiv = document.querySelector<HTMLDivElement>('#transcripts');
+  transcriptsDiv = window.transcripts as HTMLDivElement;
+  const emptyP = document.createElement('p');
+  transcriptsDiv?.appendChild(emptyP);
+
   if (!recognitionService) {
     console.error('no recognitionService implementation loaded');
     return;
@@ -20,9 +26,23 @@ function init() {
   recognitionService.startListenAudio();
   recognitionService.onInterimTextReceived((text) => {
     console.log('interim text received', text);
+    const lastP = transcriptsDiv?.lastElementChild;
+    if (lastP) {
+      lastP.textContent = text;
+    }
   })
   recognitionService.onTextReceived((text) => {
     console.log('text received', text);
+    const lastP = transcriptsDiv?.lastElementChild;
+    if (lastP) {
+      lastP.textContent = text;
+    }
+    // const p = document.createElement('p');
+    // p.textContent = text;
+    // transcriptsDiv?.appendChild(p)
+    //Create empty paragraph for coming interim text
+    const emptyP = document.createElement('p');
+    transcriptsDiv?.appendChild(emptyP);
   })
 }
 
