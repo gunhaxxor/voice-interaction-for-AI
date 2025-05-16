@@ -1,40 +1,60 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
 import {
   type RecognitionService,
-  type RecognitionServiceListenOptions
+  type RecognitionServiceListenOptions,
+  type VADState
 } from './interface';
 
-import { MicVAD, utils } from '@ricky0123/vad-web';
+import { MicVAD } from '@ricky0123/vad-web';
 import { pipeline, env, AutomaticSpeechRecognitionPipeline } from '@huggingface/transformers';
+import type { PossibleLanguagesISO6391 } from "../utilityTypes";
+
+type ASRPipeLineConfig = AutomaticSpeechRecognitionPipeline['model']['config']['transformers.js_config']
 
 export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
-  lang?: string;
+  models?: {
+    [key in PossibleLanguagesISO6391]: string
+  }
+  /**
+   * Language to recognize. Two letter language/country code (ISO 639-1). Default is 'en'.      
+   * */
+  lang?: PossibleLanguagesISO6391;
+  dtype?: ASRPipeLineConfig['dtype'],
+  device?: ASRPipeLineConfig['device'],
 }
 
 export class kbWhisperlocal implements RecognitionService {
-  private options?: kbWhisperLocalOptions;
+  private options: Required<kbWhisperLocalOptions>;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private transcriber?: AutomaticSpeechRecognitionPipeline;
 
   private listeningState: "listening" | "inactive" = "inactive";
-  private inputSpeechState: "speaking" | "idle" = "idle";
 
   constructor(options?: kbWhisperLocalOptions) {
-    this.options = options;
+    const defaultOptions: Required<kbWhisperLocalOptions> = {
+      models: {
+        // 'en': 'Xenova/whisper-tiny',
+        'en': 'onnx-community/whisper-tiny',
+        'sv': 'KBLab/kb-whisper-tiny',
+      },
+      lang: 'sv',
+      dtype: 'q4',
+      device: 'wasm',
+    }
+    this.options = { ...defaultOptions, ...options };
+    console.log(this.options);
   }
 
   private async loadTranscriber() {
     env.allowLocalModels = false;
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
-      // 'Xenova/whisper-tiny',
-      'KBLab/kb-whisper-small',
+      this.options.models[this.options.lang || 'en'],
       {
-        // local_files_only: false,
-        dtype: 'q4',
-        device: 'webgpu',
+        dtype: this.options.dtype,
+        device: this.options.device,
       }
-    ) 
+    ) as any as AutomaticSpeechRecognitionPipeline
   }
   
   private aggregateAudioBuffer: Float32Array<ArrayBufferLike> | undefined;
@@ -87,6 +107,7 @@ export class kbWhisperlocal implements RecognitionService {
   // TODO: Find a way to handle that whisper doesnt like short audio input, like one word or such.
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     console.log('VAD detected end of speech');
+    this.speechEndHandler?.();
     this.addToAggregateAudioBuffer(audio);
     if (!this.whisperIsBusy) {
       await this.processAggregateAudioBuffer();
@@ -98,7 +119,7 @@ export class kbWhisperlocal implements RecognitionService {
     if (!this.vad) return;
     const threshold = this.vad.options.positiveSpeechThreshold;
     const state = probs.isSpeech > threshold ? 'speaking' : 'idle';
-    this.setInputSpeechState(state);
+    this.setVADState(state);
   }
 
   async startListenAudio() {
@@ -107,8 +128,9 @@ export class kbWhisperlocal implements RecognitionService {
       frameSamples: 512,
       redemptionFrames: 8,
       minSpeechFrames: 2,
-      onSpeechStart() {
+      onSpeechStart: () => {
         console.log('Speech started');
+        this.speechStartHandler?.();
       },
       onSpeechEnd: this.VADonSpeechEndHandler,
       onFrameProcessed: this.VADonFramesProcessedHandler,
@@ -142,22 +164,36 @@ export class kbWhisperlocal implements RecognitionService {
     this.listeningStateChangedHandler = handler;
   }
 
-  private setInputSpeechState(state: "speaking" | "idle") {
-    this.inputSpeechState = state;
-    this.inputSpeechStateChangedHandler?.(state);
+  supportsSpeechState(): boolean {
+    return true;
+  }
+
+  private speechEndHandler?: () => void;
+  onSpeechEnd(handler?: (() => void)): void {
+    this.speechEndHandler = handler;
+  }
+  private speechStartHandler?: () => void;
+  onSpeechStart(handler?: (() => void)): void {
+    this.speechStartHandler = handler;
+  }
+
+  private VADSTate: VADState = "idle";
+  private setVADState(state: VADState) {
+    this.VADSTate = state;
+    this.VADStateChangedHandler?.(state);
   }
   
   supportsVADState(): boolean {
     return true;
   }
 
-  getVADState(): "speaking" | "idle" {
-    return this.inputSpeechState;
+  getVADState(): VADState {
+    return this.VADSTate;
   }
 
-  private inputSpeechStateChangedHandler?: (state: "speaking" | "idle") => void;
-  onVADStateChanged(handler?: (state: "speaking" | "idle") => void): void {
-    this.inputSpeechStateChangedHandler = handler;
+  private VADStateChangedHandler?: (state: VADState) => void;
+  onVADStateChanged(handler?: (state: VADState) => void): void {
+    this.VADStateChangedHandler = handler;
   }
 
   private textReceivedHandler?: (text: string) => void;

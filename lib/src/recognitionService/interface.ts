@@ -58,12 +58,31 @@ export interface RecognitionService {
    */
   onListeningStateChanged(handler?: ((state: ListeningState) => void)): void;
 
+  /**
+   * Whether the implementation supports detecting "utterances".
+   * Basically speech start and speech end, usually representing a sentence or utterance.
+   * This differs from the VADState in that it is triggered when the user has stopped speaking, while the
+   * VADState tries to detect silence also inbetween words.
+   */
+  supportsSpeechState(): boolean;
+  /**
+   * Triggered when the recognition service has detected a speech start.
+   * In practice this is when the user starts speaking after there was a speech end or recognition was inactive.
+   */
+  onSpeechStart?(handler?: (() => void)): void;
+  /**
+   * Triggered when the recognition service has detected a speech (utterance/sentence) end.
+   * This differs from the VADState in that it is triggered when the user has stopped speaking, while the
+   * VADState should try to detect silence between words.
+   */
+  onSpeechEnd?(handler?: (() => void)): void;
+
   supportsVADState(): boolean;
 
   /**
    * VAD stands for Voice Activity Detection.
    * Represents whether the user is speaking or not.
-   * Check if the implementation supports Voice Activity Detection firs with `supportsVADState()`
+   * Check if the implementation supports Voice Activity Detection first with `supportsVADState()`
    */
   getVADState?(): VADState;
 
