@@ -1,5 +1,5 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
-import { type RecognitionService, type RecognitionServiceListenOptions, type VADState } from "./interface";
+import { RecognitionServiceCallbackHandling, type RecognitionService, type RecognitionServiceListenOptions, type VADState } from "./interface";
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
@@ -12,12 +12,13 @@ export interface WhisperRecognitionServiceOptions extends RecognitionServiceList
   lang?: PossibleLanguagesISO6391
 }
 
-export class WhisperRecognitionService implements RecognitionService {
+export class WhisperRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
   private options: WhisperRecognitionServiceOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private openai: OpenAI;
 
   constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
+    super();
     const defaultOptions: WhisperRecognitionServiceOptions = {
       url: 'https://api.openai.com/v1/',
       key: 'nokeyset',
@@ -39,6 +40,7 @@ export class WhisperRecognitionService implements RecognitionService {
   }
   
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
+    this.speechEndHandler?.();
     const wavBuffer = utils.encodeWAV(audio);
 
     const file = await toFile(wavBuffer);
@@ -83,8 +85,9 @@ export class WhisperRecognitionService implements RecognitionService {
       // frames to wait before triggering endSpeech
       redemptionFrames: 6,
       minSpeechFrames: 2,
-      onSpeechStart() {
+      onSpeechStart: () => {
         console.log('speech start');
+        this.speechStartHandler?.();
       },
       onSpeechEnd: this.VADonSpeechEndHandler,
       onFrameProcessed: this.VADonFramesProcessedHandler,
@@ -100,52 +103,13 @@ export class WhisperRecognitionService implements RecognitionService {
     this.setListeningState('inactive')
   }
   
-  private listeningState: "listening" | "inactive" = "inactive"
-  private setListeningState(state: "listening" | "inactive"): void {
-    this.listeningState = state;
-    this.listeningStateChangedHandler?.(state);
-  }
-  getListeningState(): "listening" | "inactive" {
-    return this.listeningState
-  }
-
-  private listeningStateChangedHandler?: ((state: "listening" | "inactive") => void)
-  onListeningStateChanged(handler?: ((state: "listening" | "inactive") => void)): void {
-    this.listeningStateChangedHandler = handler;
+  supportsSpeechState(): boolean {
+    return true;
   }
   
   supportsVADState(): boolean {
     return true
   }
 
-  private VADState: VADState = "idle"
-  getVADState(): VADState {
-    return this.VADState
-  }
-
-  private setVADState(state: VADState): void {
-    this.VADState = state;
-    this.VADStateChangedHandler?.(state);
-  }
-
-  private VADStateChangedHandler?: ((state: VADState) => void)
-  onVADStateChanged(handler?: ((state: VADState) => void)): void {
-    this.VADStateChangedHandler = handler;
-  }
-  
-  private textReceivedHandler?: ((text: string) => void)
-  onTextReceived(handler?: ((text: string) => void)): void {
-    this.textReceivedHandler = handler;
-  }
-  
-  private interimTextReceivedHandler?: ((text: string) => void)
-  onInterimTextReceived(handler?: ((text: string) => void)): void {
-    this.interimTextReceivedHandler = handler;
-  }
-  
-  private errorHandler?: (error: Error) => void
-  onError(errorHandler: (error: Error) => void): void {
-    this.errorHandler = errorHandler;
-  }
   
 }

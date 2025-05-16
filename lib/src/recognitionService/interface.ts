@@ -115,6 +115,8 @@ export interface RecognitionService {
 export class RecognitionServiceCallbackHandling implements Pick<RecognitionService, 'onError'
   | 'getListeningState'
   | 'onListeningStateChanged'
+  | 'onSpeechStart'
+  | 'onSpeechEnd'
   | 'getVADState'
   | 'onVADStateChanged'
   | 'onTextReceived'
@@ -139,6 +141,14 @@ export class RecognitionServiceCallbackHandling implements Pick<RecognitionServi
     this.listeningStateChangedHandler = handler;
   }
 
+  protected speechEndHandler?: () => void;
+  onSpeechEnd(handler?: (() => void)): void {
+    this.speechEndHandler = handler;
+  }
+  protected speechStartHandler?: () => void;
+  onSpeechStart(handler?: (() => void)): void {
+    this.speechStartHandler = handler;
+  }
 
   protected VADState: VADState = 'idle'
   public getVADState(): VADState {

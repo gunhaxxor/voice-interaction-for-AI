@@ -4,6 +4,7 @@ import { WebRecognitionService } from 'speech-utils/recognitionService/webRecogn
 import { VoskletRecognitionService } from 'speech-utils/recognitionService/voskletRecognitionService.ts';
 import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.ts';
 import { VoskBrowserRecognitionService } from 'speech-utils/recognitionService/voskBrowserRecognition.ts';
+import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.js';
 
 
 let recognitionService: RecognitionService | undefined;
@@ -25,7 +26,7 @@ function init() {
   })
 }
 
-type SelectOption = 'web' | 'vosklet' | 'vosk' | 'whisper';
+type SelectOption = 'web' | 'vosklet' | 'vosk' | 'whisper' | 'localWhisper';
 function loadImplementation() {
   if (recognitionService) {
     recognitionService.stopListenAudio();
@@ -63,6 +64,12 @@ function loadImplementation() {
         key: 'speaches',
         lang: selectedLang?.substring(0, 2),
         model: 'Systran/faster-whisper-large-v3'
+      });
+      break;
+    case 'localWhisper':
+      console.log('loading local whisper recognition service');
+      recognitionService = new kbWhisperlocal({
+        lang: selectedLang?.substring(0, 2)
       });
       break;
   }

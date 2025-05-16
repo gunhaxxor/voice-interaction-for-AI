@@ -1,5 +1,6 @@
 import type { SpeechProbabilities } from "@ricky0123/vad-web/dist/models";
 import {
+  RecognitionServiceCallbackHandling,
   type RecognitionService,
   type RecognitionServiceListenOptions,
   type VADState
@@ -23,7 +24,7 @@ export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
   device?: ASRPipeLineConfig['device'],
 }
 
-export class kbWhisperlocal implements RecognitionService {
+export class kbWhisperlocal extends RecognitionServiceCallbackHandling implements RecognitionService {
   private options: Required<kbWhisperLocalOptions>;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private transcriber?: AutomaticSpeechRecognitionPipeline;
@@ -31,6 +32,7 @@ export class kbWhisperlocal implements RecognitionService {
   private listeningState: "listening" | "inactive" = "inactive";
 
   constructor(options?: kbWhisperLocalOptions) {
+    super();
     const defaultOptions: Required<kbWhisperLocalOptions> = {
       models: {
         // 'en': 'Xenova/whisper-tiny',
@@ -112,7 +114,6 @@ export class kbWhisperlocal implements RecognitionService {
     if (!this.whisperIsBusy) {
       await this.processAggregateAudioBuffer();
     }
-
   }
 
   private VADonFramesProcessedHandler = (probs: SpeechProbabilities) => {
@@ -150,64 +151,12 @@ export class kbWhisperlocal implements RecognitionService {
     console.log('Microphone listening stopped');
   }
 
-  private setListeningState(state: "listening" | "inactive") {
-    this.listeningState = state;
-    this.listeningStateChangedHandler?.(state);
-  }
-
-  getListeningState(): "listening" | "inactive" {
-    return this.listeningState;
-  }
-
-  private listeningStateChangedHandler?: (state: "listening" | "inactive") => void;
-  onListeningStateChanged(handler?: (state: "listening" | "inactive") => void): void {
-    this.listeningStateChangedHandler = handler;
-  }
-
   supportsSpeechState(): boolean {
     return true;
   }
 
-  private speechEndHandler?: () => void;
-  onSpeechEnd(handler?: (() => void)): void {
-    this.speechEndHandler = handler;
-  }
-  private speechStartHandler?: () => void;
-  onSpeechStart(handler?: (() => void)): void {
-    this.speechStartHandler = handler;
-  }
-
-  private VADSTate: VADState = "idle";
-  private setVADState(state: VADState) {
-    this.VADSTate = state;
-    this.VADStateChangedHandler?.(state);
-  }
-  
   supportsVADState(): boolean {
     return true;
   }
 
-  getVADState(): VADState {
-    return this.VADSTate;
-  }
-
-  private VADStateChangedHandler?: (state: VADState) => void;
-  onVADStateChanged(handler?: (state: VADState) => void): void {
-    this.VADStateChangedHandler = handler;
-  }
-
-  private textReceivedHandler?: (text: string) => void;
-  onTextReceived(handler?: (text: string) => void): void {
-    this.textReceivedHandler = handler;
-  }
-
-  private interimTextReceivedHandler?: (text: string) => void;
-  onInterimTextReceived(handler?: (text: string) => void): void {
-    this.interimTextReceivedHandler = handler;
-  }
-
-  private errorHandler?: (error: Error) => void;
-  onError(handler: (error: Error) => void): void {
-    this.errorHandler = handler;
-  }
 }

@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.js'
 
 const transcribedText = ref('Ingen text ännu...')
-const whisper = new kbWhisperlocal({ lang: 'en' })
+const whisper = new kbWhisperlocal({ lang: 'sv' })
 
 
 

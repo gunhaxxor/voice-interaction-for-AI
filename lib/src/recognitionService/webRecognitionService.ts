@@ -1,17 +1,18 @@
 import type { PossibleLanguagesBCP47 } from '../utilityTypes';
-import type { ListeningState, RecognitionService, RecognitionServiceListenOptions, VADState } from './interface';
+import { RecognitionServiceCallbackHandling, type ListeningState, type RecognitionService, type RecognitionServiceListenOptions, type VADState } from './interface';
 import * as RecognitionTypes from './recognitionTypes';
 
 interface WebRecognitionServiceListenOptions extends RecognitionServiceListenOptions {
   lang?: PossibleLanguagesBCP47;
 }
 
-export class WebRecognitionService implements RecognitionService {
+export class WebRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
   private recognition: RecognitionTypes.SpeechRecognition;
   private defaultListenOptions?: WebRecognitionServiceListenOptions;
   private listeningTargetState: ListeningState = 'inactive';
 
   constructor(options?: WebRecognitionServiceListenOptions) {
+    super()
     this.defaultListenOptions = options;
     const SpeechRecognition = window && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
     if (!SpeechRecognition) {
@@ -58,11 +59,11 @@ export class WebRecognitionService implements RecognitionService {
     }
     this.recognition.onspeechstart = () => {
       console.log('WebRecognitionService:speech started');
-      this.setVADState('speaking');
+      this.speechStartHandler?.();
     }
     this.recognition.onspeechend = () => {
       console.log('WebRecognitionService:speech ended');
-      this.setVADState('idle');
+      this.speechEndHandler?.();
     }
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.recognition.onstart = () => {
@@ -111,8 +112,14 @@ export class WebRecognitionService implements RecognitionService {
     this.interimTextReceivedHandler = handler;
   }
 
-
   // Unfortunately the browser api is not working correctly with the onSpeechStart and onSpeechEnd events.
+  // Thus speechState is not supported at the moment.
+  supportsSpeechState(): boolean {
+    return false;
+  }
+
+
+  // Unfortunately the browser api is not working correctly with the onSoundStart and onSoundEnd events.
   // Thus VADState is not supported at the moment.
   supportsVADState(): boolean {
     return false;

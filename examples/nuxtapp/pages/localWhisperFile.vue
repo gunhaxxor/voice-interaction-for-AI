@@ -63,7 +63,7 @@ onMounted(async () => {
       'KBLab/kb-whisper-tiny',
       {
         dtype: 'q4',
-        device: 'webgpu',
+        device: 'wasm',
       }
     ) as any as AutomaticSpeechRecognitionPipeline;
 
