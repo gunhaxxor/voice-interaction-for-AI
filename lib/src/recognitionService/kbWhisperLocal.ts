@@ -5,7 +5,7 @@ import {
 } from './interface';
 
 import { MicVAD, utils } from '@ricky0123/vad-web';
-import { pipeline, env } from '@huggingface/transformers';
+import { pipeline, env, AutomaticSpeechRecognitionPipeline } from '@huggingface/transformers';
 
 export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
   lang?: string;
@@ -14,7 +14,7 @@ export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
 export class kbWhisperlocal implements RecognitionService {
   private options?: kbWhisperLocalOptions;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
-  private transcriber?: Awaited<ReturnType<typeof pipeline>>;
+  private transcriber?: AutomaticSpeechRecognitionPipeline;
 
   private listeningState: "listening" | "inactive" = "inactive";
   private inputSpeechState: "speaking" | "idle" = "idle";
@@ -27,28 +27,35 @@ export class kbWhisperlocal implements RecognitionService {
     env.allowLocalModels = false;
     this.transcriber = await pipeline(
       'automatic-speech-recognition',
-      'Xenova/whisper-tiny',
-      // 'KBLab/kb-whisper-small',
-      // {
-      //   local_files_only: false,
-      // }
-    );
+      // 'Xenova/whisper-tiny',
+      'KBLab/kb-whisper-tiny',
+      {
+        // local_files_only: false,
+        dtype: 'q8',
+        // device: 'webgpu',
+      }
+    ) 
   }
   
-
+  // TODO: Find a way to handle that whisper doesnt like short audio input, like one word or such.
   private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
     console.log('VAD detected end of speech, running Whisper...');
     if (!this.transcriber) {
       console.error('Transcriber not loaded, call loadTranscriber() first');
       return;
     }
-    const wavBuffer = utils.encodeWAV(audio);
-    const result = await this.transcriber(wavBuffer, {
+    // const wavBuffer = utils.encodeWAV(audio);
+    // const arr = new Float16Array(wavBuffer);
+    const result = await this.transcriber(audio, {
       chunk_length_s: 30,
       return_timestamps: false,
       language: this.options?.lang || 'sv'
     });
     console.log('Transcription result:', result);
+    if (!result || Array.isArray(result)) {
+      console.error('eeeeeh. what?');
+      return;
+    }
     this.textReceivedHandler?.(result.text);
   }
 
@@ -63,7 +70,7 @@ export class kbWhisperlocal implements RecognitionService {
     this.vad = await MicVAD.new({
       model: 'v5',
       frameSamples: 512,
-      redemptionFrames: 6,
+      redemptionFrames: 8,
       minSpeechFrames: 2,
       onSpeechStart() {
         console.log('Speech started');
