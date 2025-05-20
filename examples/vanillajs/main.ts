@@ -64,15 +64,18 @@ function loadImplementation() {
     case 'vosklet':
       console.log('loading vosklet recognition service');
       recognitionService = new VoskletRecognitionService({
-        modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+        // modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+        modelUrl: 'https://testyta.se/models/vosk-model-small-en-us-0.15.tar.gz',
         // modelUrl: 'http://localhost:3000/models/vosk-model-small-en-us-0.15.tar.gz',
       });
       break;
     case 'vosk':
       recognitionService = new VoskBrowserRecognitionService({
         modelUrls: {
-          'sv': '/models/vosk-model-small-sv-rhasspy-0.15.tar.gz',
-          'en': '/models/vosk-model-small-en-us-0.15.tar.gz'
+          'sv': 'https://testyta.se/models/vosk-model-small-sv-rhasspy-0.15.tar.gz',
+          'en': 'https://testyta.se/models/vosk-model-small-en-us-0.15.tar.gz',
+          // 'sv': '/models/vosk-model-small-sv-rhasspy-0.15.tar.gz',
+          // 'en': '/models/vosk-model-small-en-us-0.15.tar.gz'
         },
         lang: selectedLang?.substring(0, 2),
       });
