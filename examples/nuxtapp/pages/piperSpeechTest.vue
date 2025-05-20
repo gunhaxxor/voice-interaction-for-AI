@@ -17,7 +17,8 @@
 <script lang="ts" setup>
 import OpenAI from 'openai';
 
-import { getRandomSwedishSentence } from '@/tests/testManuscript'
+// import { getRandomSwedishSentence } from '@/tests/testManuscript'
+import { getRandomSwedishSentence } from 'speech-utils/tests/testManuscript.js';
 
 function sendSpeechAndPickNewRandomSentence() {
   inputText.value = getRandomSwedishSentence();

@@ -10,7 +10,8 @@
     "./speechService/*": "./src/speechService/*",
     "./recognitionService/*": "./src/recognitionService/*",
     "./translationService/*": "./src/translationService/*",
-    "./sentenceStreamer": "./src/sentenceStreamer.ts"
+    "./sentenceStreamer": "./src/sentenceStreamer.ts",
+    "./tests/*": "./tests/*"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.1",
