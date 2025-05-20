@@ -9,12 +9,13 @@ import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.j
 
 let recognitionService: RecognitionService | undefined;
 let language = 'en-US';
-let transcriptsDiv: HTMLDivElement | undefined;
+declare const transcriptsContainer: HTMLDivElement;
+// let transcriptsContainer: HTMLDivElement | undefined;
 function init() {
   // transcriptsDiv = document.querySelector<HTMLDivElement>('#transcripts');
-  transcriptsDiv = window.transcripts as HTMLDivElement;
+  // transcriptsContainer = transcriptsContainer;
   const emptyP = document.createElement('p');
-  transcriptsDiv?.appendChild(emptyP);
+  transcriptsContainer?.appendChild(emptyP);
 
   if (!recognitionService) {
     console.error('no recognitionService implementation loaded');
@@ -26,23 +27,30 @@ function init() {
   recognitionService.startListenAudio();
   recognitionService.onInterimTextReceived((text) => {
     console.log('interim text received', text);
-    const lastP = transcriptsDiv?.lastElementChild;
+    const lastP = transcriptsContainer?.lastElementChild;
     if (lastP) {
       lastP.textContent = text;
     }
   })
   recognitionService.onTextReceived((text) => {
     console.log('text received', text);
-    const lastP = transcriptsDiv?.lastElementChild;
+    const nrOfChildren = transcriptsContainer?.childElementCount;
+    if (nrOfChildren > 10) {
+      const firstChild = transcriptsContainer.firstElementChild;
+      if (!firstChild) {
+        console.error('firstChild undefined. This should never happen');
+        return;
+      }
+      transcriptsContainer.removeChild(firstChild);
+    }
+    const lastP = transcriptsContainer?.lastElementChild;
     if (lastP) {
       lastP.textContent = text;
     }
-    // const p = document.createElement('p');
-    // p.textContent = text;
-    // transcriptsDiv?.appendChild(p)
+
     //Create empty paragraph for coming interim text
     const emptyP = document.createElement('p');
-    transcriptsDiv?.appendChild(emptyP);
+    transcriptsContainer?.appendChild(emptyP);
   })
 }
 
@@ -63,11 +71,13 @@ function loadImplementation() {
       break;
     case 'vosklet':
       console.log('loading vosklet recognition service');
-      recognitionService = new VoskletRecognitionService({
-        // modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
-        modelUrl: 'https://testyta.se/models/vosk-model-small-en-us-0.15.tar.gz',
-        // modelUrl: 'http://localhost:3000/models/vosk-model-small-en-us-0.15.tar.gz',
-      });
+      recognitionService = new VoskletRecognitionService();
+      // recognitionService = new VoskletRecognitionService({
+      //   // modelUrl: '/models/vosk-model-small-en-us-0.15.tar.gz'
+      //   modelUrl: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz',
+      //   // modelUrl: 'https://testyta.se/models/vosk-model-small-en-us-0.15.tar.gz',
+      //   // modelUrl: 'http://localhost:3000/models/vosk-model-small-en-us-0.15.tar.gz',
+      // });
       break;
     case 'vosk':
       recognitionService = new VoskBrowserRecognitionService({
