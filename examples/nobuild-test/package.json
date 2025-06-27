@@ -1,5 +1,5 @@
 {
-  "name": "vanillajs",
+  "name": "no-build-example",
   "private": true,
   "scripts": {
     "dev": "vite",
