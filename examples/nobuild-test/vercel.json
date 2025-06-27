@@ -1,6 +1,5 @@
 {
-  "outputDirectory": "./src",
-  "framework": null,
+  "outputDirectory": "src",
   "headers": [
     {
       "source": "/(.*)",
