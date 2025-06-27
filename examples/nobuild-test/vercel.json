@@ -1,7 +1,6 @@
 {
-  "buildCommand": "bun run build",
-  "installCommand": "bun install",
-  "framework": "vite",
+  "outputDirectory": "./src",
+  "framework": null,
   "headers": [
     {
       "source": "/(.*)",

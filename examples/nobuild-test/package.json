@@ -2,11 +2,9 @@
   "name": "no-build-example",
   "private": true,
   "scripts": {
-    "dev": "vite",
     "preview": "vite preview"
   },
   "dependencies": {
-    "speech-utils": "workspace:*",
     "vite": "^6.3.5"
   },
   "devDependencies": {

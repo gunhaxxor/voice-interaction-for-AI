@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recognition Example with no build stage</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body>
+  <h1>Speech to Text minimal example - no build stage</h1>
+  <div x-data="{ recognitonImpl: 'web' }">
+    <select id="select-implementation" x-model="recognitonImpl">
+      <option value="web">Web</option>
+      <option value="vosklet">Vosklet</option>
+      <option value="vosk">Vosk</option>
+      <option value="whisper">Whisper</option>
+      <option value="localWhisper">Local Whisper</option>
+    </select>
+    <select id="select-language">
+      <option value="sv-SE">sv-SE</option>
+      <option value="en-US">en-US</option>
+    </select>
+    <button onclick="loadImplementation()">Load Implementation</button>
+    <pre x-text="recognitonImpl"></pre>
+  </div>
+  <button onclick="initRecognition()">Start</button>
+  <div id="transcriptsContainer">
+  
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
