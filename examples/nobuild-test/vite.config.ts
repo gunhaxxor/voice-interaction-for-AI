@@ -23,9 +23,11 @@ export default defineConfig({
       // vite streams assets by default, and this is unfortunately not configurable.
       // While at it, let's also point requests for models to the shared models path
       name: 'buffered-model-serving',
-      configureServer(server) {
+
+      // Not sure we need this anymore?
+      configurePreviewServer(server) {
         server.middlewares.use('/models', (req, res, next) => {
-          // console.log('req.url', req.url);
+          console.log('req.url', req.url);
           const relativePath = req.url || '';
 
           if (!relativePath.endsWith('.tar.gz')) return next();
