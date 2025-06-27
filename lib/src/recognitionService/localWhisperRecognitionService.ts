@@ -24,7 +24,7 @@ export interface kbWhisperLocalOptions extends RecognitionServiceListenOptions {
   device?: ASRPipeLineConfig['device'],
 }
 
-export class kbWhisperlocal extends RecognitionServiceCallbackHandling implements RecognitionService {
+export class localWhisperRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
   private options: Required<kbWhisperLocalOptions>;
   private vad?: Awaited<ReturnType<typeof MicVAD.new>>;
   private transcriber?: AutomaticSpeechRecognitionPipeline;

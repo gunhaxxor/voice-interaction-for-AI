@@ -4,7 +4,7 @@ import { WebRecognitionService } from 'speech-utils/recognitionService/webRecogn
 import { VoskletRecognitionService } from 'speech-utils/recognitionService/voskletRecognitionService.ts';
 import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.ts';
 import { VoskBrowserRecognitionService } from 'speech-utils/recognitionService/voskBrowserRecognition.ts';
-import { kbWhisperlocal } from 'speech-utils/recognitionService/kbWhisperLocal.js';
+import { localWhisperRecognitionService } from 'speech-utils/recognitionService/localWhisperRecognitionService.ts';
 
 
 let recognitionService: RecognitionService | undefined;
@@ -101,7 +101,7 @@ function loadImplementation() {
       break;
     case 'localWhisper':
       console.log('loading local whisper recognition service');
-      recognitionService = new kbWhisperlocal({
+      recognitionService = new localWhisperRecognitionService({
         lang: selectedLang?.substring(0, 2)
       });
       break;
