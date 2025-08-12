@@ -54,6 +54,8 @@ const chosenVoice = computed<SpeechSynthesisVoice | undefined>(() => {
   return foundVoice;
 })
 
+import { WebSpeechService, type SpeechState } from 'speech-utils/speechService/webSpeechService.js';
+
 const webSpeech = new WebSpeechService();
 
 const availableVoices = ref<SpeechSynthesisVoice[]>(webSpeech.getAvailableVoices() ?? []);

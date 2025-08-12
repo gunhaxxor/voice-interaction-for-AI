@@ -1,5 +1,7 @@
 import type { SpeechService, SpeechState } from "./interface";
 import { isSpeechSynthesisSupported, initiatateSpeechSynth, type UtteranceOptions } from "./webSpeech";
+
+export type { SpeechState } from "./interface";
 export class WebSpeechService implements SpeechService {
   private speech: ReturnType<typeof initiatateSpeechSynth>
 
