@@ -21,8 +21,10 @@ import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisp
 
 const whisperRecogniton = new WhisperRecognitionService({
   url: 'http://localhost:8000/v1',
+  model: 'Systran/faster-whisper-large-v3',
   key: 'speaches',
-  lang: 'sv'
+  lang: 'sv',
+  mode: 'translate'
 });
 
 const currentTranscript = ref('');
