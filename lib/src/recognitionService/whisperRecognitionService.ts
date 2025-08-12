@@ -150,7 +150,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     this.vad = await MicVAD.new({
       model: 'v5',
       frameSamples: 512,          // silero v5
-      redemptionFrames: 30,       // brief pauses stay inside a segment
+      redemptionFrames: 10,       // brief pauses stay inside a segment
       minSpeechFrames: 4,         // keep low so single words aren’t discarded
       onSpeechStart: () => {
         // new speech incoming — avoid mid-utterance grace flush

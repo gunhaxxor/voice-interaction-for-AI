@@ -1,11 +1,11 @@
 <template>
-  <div class="fixed top-2 left-2" >
+  <div class="fixed top-2 left-2 " >
     <USwitch v-model="listeningToggleState" label="Start/Stop" />
     <div v-if="debugEnabled">
 
     <p>{{ listening ? 'Listening' : 'Not listening' }}</p>
     <p>{{ speaking ? 'Speaking' : 'Not speaking' }}</p>
-    <div>
+    <!-- <div>
       <p class="font-bold">Current transcript: {{ interimTranscript }}</p>
       <p>
         History:
@@ -13,20 +13,23 @@
       <p v-for="transcript in allTranscripts">
         {{ transcript }}
       </p>
-    </div>
+    </div> -->
     </div>
   </div>
-  <div class="grid place-content-center h-screen rise-fonts">
-
-      <p v-for="transcript in mostRecenTranscripts">
-        {{ transcript }}
-      </p>
+  <div class="h-screen w-full rise-fonts">
+    <div v-auto-animate class="absolute top-5 bottom-1/4 inset-x-36 flex flex-col justify-end gap-6">
+        <p v-for="(transcript, idx) in mostRecenTranscripts" :key="idx" class="w-full">
+          {{ transcript }}
+        </p>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 
 import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.js';
+
+import { getRandomSentence } from 'speech-utils/tests/testManuscript.js'
 
 const keys = useMagicKeys();
 
@@ -36,22 +39,34 @@ whenever(keys.shift_D, () => {
   toggleDebug();
 })
 
+whenever(keys.t, () => {
+  console.log('t pressed');
+  allTranscripts.value.push(getRandomSentence());
+})
+
 const whisperRecogniton = new WhisperRecognitionService({
   url: 'http://localhost:8000/v1',
   model: 'Systran/faster-whisper-large-v3',
   key: 'speaches',
   lang: 'sv',
-  mode: 'translate'
+  mode: 'translate',
+  graceMs: 800,
 });
 
 const interimTranscript = ref('');
 // const { history } = useRefHistory(latestTranscript);
-const allTranscripts = ref<string[]>([]);
-const mostRecenTranscripts = computed(() => allTranscripts.value.slice(0, 5));
+const allTranscripts = ref<string[]>([
+  'Today is a good day!',
+  'It\'s not clear how the results were calculated',
+  '... and it\'s also not clear why people keep trying the same thing over and over. When it obviously doesn\'t work.',
+  'Trying to staty positive, one could argue that its in nature of human behaviour to never give up hope.'
+]);
+const mostRecenTranscripts = computed(() => allTranscripts.value.slice(-30));
 
 
 whisperRecogniton.onTextReceived((text) => {
-  allTranscripts.value.unshift(text);
+  // allTranscripts.value.unshift(text);
+  allTranscripts.value.push(text);
   interimTranscript.value = '';
 })
 whisperRecogniton.onInterimTextReceived((text) => {
@@ -84,8 +99,15 @@ whisperRecogniton.onVADStateChanged((state) => {
 </script>
 
 <style scoped>
-div {
+.rise-fonts {
   /* font-family: Lato, sans-serif; */
+  font-size: 2rem;
+}
+</style>
+
+<style>
+body {
+  background-color: #009ca6;
   font-family: "Roboto Mono", sans-serif;
 }
 </style>

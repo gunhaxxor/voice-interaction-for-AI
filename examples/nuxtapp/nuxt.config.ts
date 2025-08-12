@@ -9,7 +9,8 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@vueuse/nuxt',
     '@nuxt/image',
-    '@nuxt/test-utils'
+    '@nuxt/test-utils',
+    '@formkit/auto-animate/nuxt',
   ],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
