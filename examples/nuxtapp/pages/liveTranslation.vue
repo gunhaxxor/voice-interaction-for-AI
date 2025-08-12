@@ -1,27 +1,91 @@
 <template>
+  <div class="fixed top-2 left-2" >
+    <USwitch v-model="listeningToggleState" label="Start/Stop" />
+    <div v-if="debugEnabled">
 
+    <p>{{ listening ? 'Listening' : 'Not listening' }}</p>
+    <p>{{ speaking ? 'Speaking' : 'Not speaking' }}</p>
+    <div>
+      <p class="font-bold">Current transcript: {{ interimTranscript }}</p>
+      <p>
+        History:
+      </p>
+      <p v-for="transcript in allTranscripts">
+        {{ transcript }}
+      </p>
+    </div>
+    </div>
+  </div>
+  <div class="grid place-content-center h-screen rise-fonts">
 
-  <UButton @click="recognition.startListenAudio()">Start listening</UButton>
-  <div class="flex flex-col">
-    <h2 v-for="text in allText">{{ text }}</h2>
+      <p v-for="transcript in mostRecenTranscripts">
+        {{ transcript }}
+      </p>
   </div>
 </template>
-<script setup lang="ts">
 
-import { WhisperTranslationService } from 'speech-utils/translationService/whisperTranslationService.js';
+<script lang="ts" setup>
 
-const recognition = new WhisperTranslationService({
+import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisperRecognitionService.js';
+
+const keys = useMagicKeys();
+
+const [debugEnabled, toggleDebug] = useToggle();
+whenever(keys.shift_D, () => {
+  console.log('shift D pressed');
+  toggleDebug();
+})
+
+const whisperRecogniton = new WhisperRecognitionService({
   url: 'http://localhost:8000/v1',
-  key: 'speaches',
   model: 'Systran/faster-whisper-large-v3',
-  // model: 'Systran/faster-whisper-medium'
-  // model: 'KBLab/kb-whisper-large'
+  key: 'speaches',
+  lang: 'sv',
+  mode: 'translate'
 });
 
+const interimTranscript = ref('');
+// const { history } = useRefHistory(latestTranscript);
+const allTranscripts = ref<string[]>([]);
+const mostRecenTranscripts = computed(() => allTranscripts.value.slice(0, 5));
 
-const allText = ref<string[]>([]);
-recognition.onTextReceived((text) => {
-  allText.value.push(text);  
+
+whisperRecogniton.onTextReceived((text) => {
+  allTranscripts.value.unshift(text);
+  interimTranscript.value = '';
+})
+whisperRecogniton.onInterimTextReceived((text) => {
+  console.log('interim text: ', text);
+  interimTranscript.value = text;
+})
+
+const listeningToggleState = computed<boolean>({
+  get() {
+    return listening.value;
+  },
+  set(listenValue) {
+    if (!listening.value) {
+      whisperRecogniton.startListenAudio()
+    } else {
+      whisperRecogniton.stopListenAudio();
+    }
+  }
+})
+
+const listening = ref(false);
+whisperRecogniton.onListeningStateChanged((state) => {
+  listening.value = state === 'listening' ? true : false;
+})
+const speaking = ref(false);
+whisperRecogniton.onVADStateChanged((state) => {
+  speaking.value = state === 'speaking' ? true : false;
 })
 
 </script>
+
+<style scoped>
+div {
+  /* font-family: Lato, sans-serif; */
+  font-family: "Roboto Mono", sans-serif;
+}
+</style>
