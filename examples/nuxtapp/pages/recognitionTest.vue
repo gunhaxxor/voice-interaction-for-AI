@@ -20,6 +20,8 @@
 
 <script lang="ts" setup>
 
+import { WebRecognitionService } from 'speech-utils/recognitionService/webRecognitionService.js';
+
 const recognition = new WebRecognitionService({
   lang: 'sv-SE',
 })
