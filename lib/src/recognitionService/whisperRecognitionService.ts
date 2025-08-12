@@ -83,8 +83,8 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       model: 'v5',
       frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs
       // frames to wait before triggering endSpeech
-      redemptionFrames: 6,
-      minSpeechFrames: 2,
+      redemptionFrames: 10,
+      minSpeechFrames: 4,
       onSpeechStart: () => {
         console.log('speech start');
         this.speechStartHandler?.();

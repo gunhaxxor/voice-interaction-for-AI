@@ -84,7 +84,7 @@ export class WhisperTranslationService implements RecognitionService {
         model: 'v5',
         frameSamples: 512, //silero 5 should use 512 according to VAD-browser docs
         // frames to wait before triggering endSpeech
-        redemptionFrames: 6,
+        redemptionFrames: 10,
         minSpeechFrames: 2,
         onSpeechStart() {
           console.log('speech start');
