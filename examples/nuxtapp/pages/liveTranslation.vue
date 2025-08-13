@@ -1,11 +1,11 @@
 <template>
-  <div class="fixed top-2 left-2 " >
+  <div class="fixed top-2 left-2 ">
     <USwitch v-model="listeningToggleState" label="Start/Stop" />
     <div v-if="debugEnabled">
 
-    <p>{{ listening ? 'Listening' : 'Not listening' }}</p>
-    <p>{{ speaking ? 'Speaking' : 'Not speaking' }}</p>
-    <!-- <div>
+      <p>{{ listening ? 'Listening' : 'Not listening' }}</p>
+      <p>{{ speaking ? 'Speaking' : 'Not speaking' }}</p>
+      <!-- <div>
       <p class="font-bold">Current transcript: {{ interimTranscript }}</p>
       <p>
         History:
@@ -18,9 +18,9 @@
   </div>
   <div class="h-screen w-full rise-fonts">
     <div v-auto-animate class="absolute top-5 bottom-1/4 inset-x-36 flex flex-col justify-end gap-6">
-        <p v-for="(transcript, idx) in mostRecenTranscripts" :key="idx" class="w-full">
-          {{ transcript }}
-        </p>
+      <p v-for="(transcript, idx) in allTranscripts" :key="transcript.id" class="w-full">
+        {{ transcript }}
+      </p>
     </div>
   </div>
 </template>
@@ -33,6 +33,8 @@ import { getRandomSentence } from 'speech-utils/tests/testManuscript.js'
 
 const keys = useMagicKeys();
 
+let transcriptCounter = 0;
+
 const [debugEnabled, toggleDebug] = useToggle();
 whenever(keys.shift_D, () => {
   console.log('shift D pressed');
@@ -41,7 +43,7 @@ whenever(keys.shift_D, () => {
 
 whenever(keys.t, () => {
   console.log('t pressed');
-  allTranscripts.value.push(getRandomSentence());
+  allTranscripts.value.push({ id: transcriptCounter++, text: getRandomSentence() });
 })
 
 const whisperRecogniton = new WhisperRecognitionService({
@@ -55,18 +57,18 @@ const whisperRecogniton = new WhisperRecognitionService({
 
 const interimTranscript = ref('');
 // const { history } = useRefHistory(latestTranscript);
-const allTranscripts = ref<string[]>([
-  'Today is a good day!',
-  'It\'s not clear how the results were calculated',
-  '... and it\'s also not clear why people keep trying the same thing over and over. When it obviously doesn\'t work.',
-  'Trying to staty positive, one could argue that its in nature of human behaviour to never give up hope.'
+const allTranscripts = ref<{ id: number, text: string }[]>([
+// { id: transcriptCounter++, text: 'Today is a good day!' },
+// { id: transcriptCounter++, text: 'It\'s not clear how the results were calculated' },
+// { id: transcriptCounter++, text: '... and it\'s also not clear why people keep trying the same thing over and over. When it obviously doesn\'t work.' },
+// { id: transcriptCounter++, text: 'Trying to staty positive, one could argue that its in nature of human behaviour to never give up hope.' }
 ]);
-const mostRecenTranscripts = computed(() => allTranscripts.value.slice(-30));
+// const mostRecenTranscripts = computed(() => allTranscripts.value.slice(-30));
 
 
 whisperRecogniton.onTextReceived((text) => {
   // allTranscripts.value.unshift(text);
-  allTranscripts.value.push(text);
+  allTranscripts.value.push({ id: transcriptCounter++, text });
   interimTranscript.value = '';
 })
 whisperRecogniton.onInterimTextReceived((text) => {
