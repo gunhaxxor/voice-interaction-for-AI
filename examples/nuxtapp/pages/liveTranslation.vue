@@ -98,6 +98,13 @@ whisperRecogniton.onVADStateChanged((state) => {
   speaking.value = state === 'speaking' ? true : false;
 })
 
+whisperRecogniton.onSpeechStart(() => {
+  console.log('Speech started');
+});
+whisperRecogniton.onSpeechEnd(() => {
+  console.log('Speech ended');
+});
+
 </script>
 
 <style scoped>

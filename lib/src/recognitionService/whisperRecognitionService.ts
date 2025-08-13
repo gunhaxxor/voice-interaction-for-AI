@@ -21,6 +21,8 @@ export interface WhisperRecognitionServiceOptions extends RecognitionServiceList
   minChunkSec?: number,
   /** If nothing new is appended within this time, flush even if under minChunkSec */
   graceMs?: number
+  /** If user speaks continuously for this long, flush even if VAD doesn't detect a pause */
+  maxUtteranceMs?: number
 }
 
 export class WhisperRecognitionService extends RecognitionServiceCallbackHandling implements RecognitionService {
@@ -30,10 +32,10 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
   // Accumulation state
   private readonly SAMPLE_RATE = 16000; // vad-web outputs 16kHz
-  private hold: Float32Array | null = null;
+  private audioBuffer: Float32Array | null = null;
+  // Only accumulate audio after speech start, not after flush/silence
+  private shouldAccumulateBuffer: boolean = false;
 
-  // Grace timer state
-  private graceTimer: number | null = null;
 
   private concatAudio(a: Float32Array, b: Float32Array) {
     const out = new Float32Array(a.length + b.length);
@@ -42,21 +44,6 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   }
   private durSec(a: Float32Array) { return a.length / this.SAMPLE_RATE; }
 
-  private clearGraceTimer() {
-    if (this.graceTimer) {
-      clearTimeout(this.graceTimer as unknown as number);
-      this.graceTimer = null;
-    }
-  }
-
-  private scheduleGraceFlush() {
-    this.clearGraceTimer();
-    const ms = this.options.graceMs!;
-    this.graceTimer = setTimeout(() => {
-      void this.flushHold(true); // force flush even if under min
-    }, ms) as unknown as number;
-  }
-
   constructor(options?: WhisperRecognitionServiceOptions | OpenAI) {
     super();
     const defaultOptions = {
@@ -64,8 +51,9 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       key: 'nokeyset',
       model: 'KBLab/kb-whisper-medium',
       mode: 'transcribe',
-      minChunkSec: 3,
-      graceMs: 1200,
+      // minChunkSec: 3,
+      // graceMs: 1200,
+      // maxUtteranceMs: 7000,
     } satisfies WhisperRecognitionServiceOptions;
 
     if (options instanceof OpenAI) {
@@ -84,60 +72,60 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   }
 
   // Centralized send path: if force=false, send only if >= minChunkSec; if force=true, send whatever is buffered
-  private async flushHold(force: boolean) {
-    if (!this.hold) return;
+  private async sendAudioBuffer(audio: Float32Array, force: boolean = false) {
 
     const minSec = this.options.minChunkSec!;
-    const ready = this.durSec(this.hold) >= minSec;
+    const ready = this.durSec(audio) >= minSec;
 
     if (!force && !ready) return;
 
-    const wavBuffer = utils.encodeWAV(this.hold);
-    this.hold = null;          // prevent double-send
-    this.clearGraceTimer();    // no pending flush after we send
+    console.log('Flushing audioBuffer:', audio.length, 'samples,', this.durSec(audio).toFixed(2), 'seconds');
+
+    const wavBuffer = utils.encodeWAV(audio);
+    this.audioBuffer = null;          // prevent double-send
+    this.shouldAccumulateBuffer = false; // buffer is now fresh after flush
 
     const file = await toFile(wavBuffer);
 
-    if (this.options.mode === 'transcribe') {
-      const text = await this.openai.audio.transcriptions.create({
-        model: this.options.model!,
-        file,
-        stream: true,
-        language: this.options.lang,
-      });
-      for await (const chunk of text) {
-        if (chunk.type === 'transcript.text.delta') {
-          this.interimTextReceivedHandler?.(chunk.delta);
-        } else {
-          this.textReceivedHandler?.(chunk.text);
+    try {
+      if (this.options.mode === 'transcribe') {
+        const text = await this.openai.audio.transcriptions.create({
+          model: this.options.model!,
+          file,
+          stream: true,
+          language: this.options.lang,
+        });
+        for await (const chunk of text) {
+          if (chunk.type === 'transcript.text.delta') {
+            this.interimTextReceivedHandler?.(chunk.delta);
+          } else {
+            this.textReceivedHandler?.(chunk.text);
+          }
         }
+      } else {
+        const text = await this.openai.audio.translations.create({
+          model: this.options.model!,
+          file,
+        });
+        this.textReceivedHandler?.(text.text);
       }
-    } else {
-      const text = await this.openai.audio.translations.create({
-        model: this.options.model!,
-        file,
-      });
-      this.textReceivedHandler?.(text.text);
+    } finally {
+      // Optionally, log or emit an event here if you want to monitor
+      console.log('Response received');
     }
   }
 
-  // Accumulate and either send immediately (>= min) or schedule grace flush
-  private VADonSpeechEndHandler = async (audio: Float32Array<ArrayBufferLike>) => {
+  private VADonSpeechEndHandler = async (audio: Float32Array) => {
     this.speechEndHandler?.();
-
-    const seg = audio as unknown as Float32Array;
-    this.hold = this.hold ? this.concatAudio(this.hold, seg) : seg;
-
-    if (this.durSec(this.hold) >= this.options.minChunkSec!) {
-      await this.flushHold(false); // send now
-      return;
-    }
-
-    // Not long enough yet — arm/reset grace timer
-    this.scheduleGraceFlush();
+    await this.sendAudioBuffer(audio, true);
   }
 
-  private VADonFramesProcessedHandler = (probs: SpeechProbabilities) => {
+  // Accumulate audio frames and update VAD state
+  private VADonFramesProcessedHandler = (probs: SpeechProbabilities, audio: Float32Array) => {
+  // Accumulate audio frames in real time
+  // if (audio && this.shouldAccumulateBuffer) {
+  //   this.audioBuffer = this.audioBuffer ? this.concatAudio(this.audioBuffer, audio) : audio;
+  // }
     if (!this.vad) return;
     if (probs.isSpeech > this.vad.options.positiveSpeechThreshold) {
       this.setVADState('speaking');
@@ -150,12 +138,18 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     this.vad = await MicVAD.new({
       model: 'v5',
       frameSamples: 512,          // silero v5
-      redemptionFrames: 10,       // brief pauses stay inside a segment
-      minSpeechFrames: 4,         // keep low so single words aren’t discarded
+      redemptionFrames: 10,       // nr of silent frames before considered speechend
+      minSpeechFrames: 2,         // min speech frames are discarded, so keep low so single words aren’t discarded
       onSpeechStart: () => {
         // new speech incoming — avoid mid-utterance grace flush
-        this.clearGraceTimer();
-        this.speechStartHandler?.();
+        // this.clearGraceTimer();
+        // this.clearMaxUtteranceTimer();
+        // this.hold = null; // Always clear buffer at start of utterance
+        // this.shouldAccumulateBuffer = true; // Start accumulating
+        // this.scheduleMaxUtteranceFlush();
+        // this.speechStartHandler?.();
+        // 
+        console.log('Speech started');
       },
       onSpeechEnd: this.VADonSpeechEndHandler,
       onFrameProcessed: this.VADonFramesProcessedHandler,
@@ -168,10 +162,11 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   async stopListenAudio(): Promise<void> {
     this.vad?.destroy();
     this.setListeningState('inactive');
-    this.clearGraceTimer();
+    // this.clearGraceTimer();
+    // this.clearMaxUtteranceTimer();
 
     // Force-flush remaining audio (even if under min)
-    await this.flushHold(true);
+    // await this.sendAudioBuffer(true);
   }
 
   supportsSpeechState(): boolean { return true; }
