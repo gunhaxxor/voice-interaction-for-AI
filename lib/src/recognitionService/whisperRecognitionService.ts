@@ -19,6 +19,8 @@ export interface WhisperRecognitionServiceOptions extends RecognitionServiceList
   mode?: 'translate' | 'transcribe',
   /** Only send to Whisper once accumulated audio >= this many seconds */
   minChunkSec?: number,
+  /** If under minChunkSec, wait this many seconds before sending anyway */
+  secToWaitBeforeSendingSmallChunk?: number, 
   /** If buffer grows to this many seconds, flush even if speech hasn't ended */
   maxChunkSec?: number
 }
@@ -41,7 +43,10 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     out.set(a, 0); out.set(b, a.length);
     return out;
   }
-  private durSec(a: Float32Array) { return a.length / this.SAMPLE_RATE; }
+  private durSecOfBuffer(a: Float32Array) { return a.length / this.SAMPLE_RATE; }
+  private samplesToSec(samples: number) {
+    return samples / this.SAMPLE_RATE;
+  }
   private secToFrames(sec: number) {
     return Math.round(sec * this.SAMPLE_RATE / this.FRAMESAMPLES);
   }
@@ -54,6 +59,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       model: 'KBLab/kb-whisper-medium',
       mode: 'transcribe',
       minChunkSec: 2,
+      secToWaitBeforeSendingSmallChunk: 1,
       maxChunkSec: undefined, // no max chunk by default
     } satisfies WhisperRecognitionServiceOptions;
 
@@ -74,11 +80,11 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
   // Centralized send path: if force=false, send only if >= minChunkSec; if force=true, send whatever is buffered
   private async sendAudioBuffer() {
-    if (!this.audioBuffer || this.durSec(this.audioBuffer) === 0) {
+    if (!this.audioBuffer || this.durSecOfBuffer(this.audioBuffer) === 0) {
       console.warn('No audio to send, skipping flush');
       return;
     }
-    console.log('Sending audioBuffer:', this.audioBuffer.length, 'samples,', this.durSec(this.audioBuffer).toFixed(2), 'seconds');
+    console.log('Sending audioBuffer:', this.audioBuffer.length, 'samples,', this.durSecOfBuffer(this.audioBuffer).toFixed(2), 'seconds');
 
     const wavBuffer = utils.encodeWAV(this.audioBuffer);
     this.audioBuffer = null;
@@ -111,11 +117,15 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     }
   }
 
+  private prematureBufferLength: number | null = null;
+
   private VADonSpeechEndHandler = async () => {
     const minSec = this.options.minChunkSec!;
 
-    if (this.audioBuffer && this.durSec(this.audioBuffer) <= minSec) {
-      console.log('Audio buffer too short, not sending:', this.durSec(this.audioBuffer).toFixed(2), 'seconds');
+    if (this.audioBuffer && this.durSecOfBuffer(this.audioBuffer) <= minSec) {
+      this.prematureBufferLength = this.audioBuffer.length;
+      console.log('Premature buffer (', this.prematureBufferLength, ') not sending:', this.durSecOfBuffer(this.audioBuffer).toFixed(2), 'seconds');
+
       return; // Don't send if under minChunkSec
     } else {
       this.speechEndHandler?.();
@@ -125,20 +135,29 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   }
 
   // Accumulate audio frames and update VAD state
-  private VADonFramesProcessedHandler = (probs: SpeechProbabilities, audio: Float32Array) => {
+  private VADonFramesProcessedHandler = async (probs: SpeechProbabilities, audio: Float32Array) => {
     if (probs.isSpeech > this.vad!.options.positiveSpeechThreshold) {
       this.setVADState('speaking');
     } else {
       this.setVADState('idle');
     }
+    if (this.audioBuffer && this.prematureBufferLength !== null) {
+      const secSinceFalseSpeechEnd = this.samplesToSec(this.audioBuffer.length - this.prematureBufferLength!);
+      if (secSinceFalseSpeechEnd >= this.options.secToWaitBeforeSendingSmallChunk!) {
+        this.prematureBufferLength = null;
+        this.shouldAccumulateBuffer = false; // Reset accumulation state
+        await this.sendAudioBuffer();
+      }
+    }
+
     // Accumulate audio frames in real time
-    if (!audio || !this.shouldAccumulateBuffer) {
+    if (!this.shouldAccumulateBuffer) {
       console.log('Skipping audio accumulation, not in accumulation mode');
       return;
     }
     this.audioBuffer = this.audioBuffer ? this.concatAudio(this.audioBuffer, audio) : audio;
     const maxSec = this.options.maxChunkSec;
-    if (maxSec && this.durSec(this.audioBuffer) >= maxSec) {
+    if (maxSec && this.durSecOfBuffer(this.audioBuffer) >= maxSec) {
       // Flush immediately if buffer exceeds maxChunkSec
       this.sendAudioBuffer();
       return;
