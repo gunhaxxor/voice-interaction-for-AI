@@ -119,6 +119,11 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
   private prematureBufferLength: number | null = null;
 
+  private VADonSpeechStartHandler = () => {
+    this.shouldAccumulateBuffer = true; // If not already accumulating, start accumulating audio
+    console.log('Speech started');
+  }
+
   private VADonSpeechEndHandler = async () => {
     const minSec = this.options.minChunkSec!;
 
@@ -171,10 +176,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       // Express in seconds instead of frames
       redemptionFrames: this.secToFrames(0.5), // 0.5 seconds of silence before considered speechend
       minSpeechFrames: this.secToFrames(0.05), // 0.05 seconds minimum speech (keep low so single words aren’t discarded)
-      onSpeechStart: () => {
-        this.shouldAccumulateBuffer = true; // Start accumulating
-        console.log('Speech started');
-      },
+      onSpeechStart: this.VADonSpeechStartHandler,
       onSpeechEnd: this.VADonSpeechEndHandler,
       onFrameProcessed: this.VADonFramesProcessedHandler,
     });
