@@ -1,4 +1,12 @@
 <template>
+  <div class="h-screen w-full mask-t-from-80%">
+    <div v-auto-animate class="h-5/6 w-5/6 mx-auto flex flex-col justify-end gap-6">
+      <p v-for="(transcript, idx) in allTranscripts" :key="transcript.id"
+        class="w-full dynamic-text-size transition-all">
+        {{ transcript.text }}
+      </p>
+    </div>
+  </div>
   <div class="fixed bottom-2 left-2 hover:opacity-100 opacity-30 transition-opacity">
     <USwitch v-model="listeningToggleState" label="Start/Stop" />
     <div v-if="debugEnabled">
@@ -14,13 +22,6 @@
         {{ transcript }}
       </p>
     </div> -->
-    </div>
-  </div>
-  <div class="h-screen w-full rise-fonts">
-    <div v-auto-animate class="absolute top-5 bottom-1/4 inset-x-36 flex flex-col justify-end gap-6">
-      <p v-for="(transcript, idx) in allTranscripts" :key="transcript.id" class="w-full">
-        {{ transcript.text }}
-      </p>
     </div>
   </div>
 </template>
@@ -110,9 +111,12 @@ whisperRecogniton.onSpeechEnd(() => {
 </script>
 
 <style scoped>
-.rise-fonts {
-  /* font-family: Lato, sans-serif; */
-  font-size: 2rem;
+        .dynamic-text-size {
+          font-size: calc(2rem + 1vw);
+    
+          &:last-child {
+            font-size: calc(2.8rem + 1vw);
+          }
 }
 </style>
 
