@@ -145,7 +145,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     this.prematureBufferLength = null; // Reset premature buffer length
     this.isSpeaking = true;
     this.speechStartHandler?.(); // Notify speech start handler
-    console.log('Speech started');
+    // console.log('Speech started');
   }
 
   private VADonSpeechEndHandler = async () => {
@@ -190,7 +190,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
     // Accumulate audio frames in real time
     if (!this.shouldAccumulateBuffer) {
-      console.log('Skipping audio accumulation, not in accumulation mode');
+      // console.log('Skipping audio accumulation, not in accumulation mode');
       return;
     }
     this.audioBuffer = this.audioBuffer ? this.concatAudio(this.audioBuffer, audio) : audio;
