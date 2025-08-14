@@ -33,14 +33,32 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   // Accumulation state
   private readonly SAMPLE_RATE = 16000; // vad-web outputs 16kHz
   private readonly FRAMESAMPLES = 512; // 512 samples per frame
+  // Number of frames to prepend before speech start to avoid cutting off utterances
+  private PRESPEECHFRAMES = 2;
   private audioBuffer: Float32Array | null = null;
   // Only accumulate audio after speech start, not after flush/silence
   private shouldAccumulateBuffer: boolean = false;
+
+  // Rolling buffer for pre-speech frames
+  private preSpeechBuffer: Float32Array[] = [];
+  private isSpeaking: boolean = false;
 
 
   private concatAudio(a: Float32Array, b: Float32Array) {
     const out = new Float32Array(a.length + b.length);
     out.set(a, 0); out.set(b, a.length);
+    return out;
+  }
+
+  private concatFrames(frames: Float32Array[]): Float32Array {
+    if (frames.length === 0) return new Float32Array(0);
+    const totalLength = frames.reduce((sum, f) => sum + f.length, 0);
+    const out = new Float32Array(totalLength);
+    let offset = 0;
+    for (const f of frames) {
+      out.set(f, offset);
+      offset += f.length;
+    }
     return out;
   }
   private durSecOfBuffer(a: Float32Array) { return a.length / this.SAMPLE_RATE; }
@@ -84,10 +102,14 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       console.warn('No audio to send, skipping flush');
       return;
     }
-    console.log('Sending audioBuffer:', this.audioBuffer.length, 'samples,', this.durSecOfBuffer(this.audioBuffer).toFixed(2), 'seconds');
+    // Prepend pre-speech frames only when sending
+    const preSpeech = this.concatFrames(this.preSpeechBuffer);
+    const toSend = preSpeech.length > 0 ? this.concatAudio(preSpeech, this.audioBuffer) : this.audioBuffer;
+    console.log('Sending audioBuffer:', toSend.length, 'samples,', (toSend.length / this.SAMPLE_RATE).toFixed(2), 'seconds');
 
-    const wavBuffer = utils.encodeWAV(this.audioBuffer);
+    const wavBuffer = utils.encodeWAV(toSend);
     this.audioBuffer = null;
+    this.preSpeechBuffer = []; // Clear after sending
     const file = await toFile(wavBuffer);
     try {
       if (this.options.mode === 'transcribe') {
@@ -122,16 +144,17 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
   private VADonSpeechStartHandler = () => {
     this.shouldAccumulateBuffer = true; // If not already accumulating, start accumulating audio
     this.prematureBufferLength = null; // Reset premature buffer length
+    this.isSpeaking = true;
     console.log('Speech started');
   }
 
   private VADonSpeechEndHandler = async () => {
+    this.isSpeaking = false;
     const minSec = this.options.minChunkSec!;
 
     if (this.audioBuffer && this.durSecOfBuffer(this.audioBuffer) <= minSec) {
       this.prematureBufferLength = this.audioBuffer.length;
       console.log('Premature buffer (', this.prematureBufferLength, ') not sending:', this.durSecOfBuffer(this.audioBuffer).toFixed(2), 'seconds');
-
       return; // Don't send if under minChunkSec
     } else {
       this.speechEndHandler?.();
@@ -142,6 +165,13 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
   // Accumulate audio frames and update VAD state
   private VADonFramesProcessedHandler = async (probs: SpeechProbabilities, audio: Float32Array) => {
+    // Always update pre-speech buffer if not speaking
+    if (!this.isSpeaking && audio) {
+      this.preSpeechBuffer.push(audio);
+      if (this.preSpeechBuffer.length > this.PRESPEECHFRAMES) {
+        this.preSpeechBuffer.shift();
+      }
+    }
     if (probs.isSpeech > this.vad!.options.positiveSpeechThreshold) {
       this.setVADState('speaking');
     } else {
@@ -150,6 +180,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     if (this.audioBuffer && this.prematureBufferLength !== null) {
       const secSinceFalseSpeechEnd = this.samplesToSec(this.audioBuffer.length - this.prematureBufferLength!);
       if (secSinceFalseSpeechEnd >= this.options.secToWaitBeforeSendingSmallChunk!) {
+        console.log('Sending premature buffer after waiting');
         this.prematureBufferLength = null;
         this.shouldAccumulateBuffer = false; // Reset accumulation state
         await this.sendAudioBuffer();
