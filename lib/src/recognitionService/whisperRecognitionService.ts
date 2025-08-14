@@ -77,7 +77,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       model: 'KBLab/kb-whisper-medium',
       mode: 'transcribe',
       minChunkSec: 2,
-      secToWaitBeforeSendingSmallChunk: 1,
+      secToWaitBeforeSendingSmallChunk: 2,
       maxChunkSec: undefined, // no max chunk by default
     } satisfies WhisperRecognitionServiceOptions;
 

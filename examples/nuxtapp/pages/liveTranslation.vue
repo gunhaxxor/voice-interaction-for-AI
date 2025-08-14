@@ -53,6 +53,8 @@ const whisperRecogniton = new WhisperRecognitionService({
   lang: 'sv',
   mode: 'translate',
   maxChunkSec: 7,
+  minChunkSec: 2,
+  secToWaitBeforeSendingSmallChunk: 2,
 });
 
 const interimTranscript = ref('');
