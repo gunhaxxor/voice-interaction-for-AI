@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed top-2 left-2 ">
+  <div class="fixed bottom-2 left-2 hover:opacity-100 opacity-30 transition-opacity">
     <USwitch v-model="listeningToggleState" label="Start/Stop" />
     <div v-if="debugEnabled">
 
@@ -19,7 +19,7 @@
   <div class="h-screen w-full rise-fonts">
     <div v-auto-animate class="absolute top-5 bottom-1/4 inset-x-36 flex flex-col justify-end gap-6">
       <p v-for="(transcript, idx) in allTranscripts" :key="transcript.id" class="w-full">
-        {{ transcript }}
+        {{ transcript.text }}
       </p>
     </div>
   </div>
@@ -118,7 +118,9 @@ whisperRecogniton.onSpeechEnd(() => {
 
 <style>
 body {
-  background-color: #009ca6;
+  /* background-color: #009ca6; */
+    background-color: #0e4e65;
+    color: #fff7dd;
   font-family: "Roboto Mono", sans-serif;
 }
 </style>
