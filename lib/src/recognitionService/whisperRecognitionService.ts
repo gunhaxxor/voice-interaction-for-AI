@@ -121,6 +121,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
 
   private VADonSpeechStartHandler = () => {
     this.shouldAccumulateBuffer = true; // If not already accumulating, start accumulating audio
+    this.prematureBufferLength = null; // Reset premature buffer length
     console.log('Speech started');
   }
 
