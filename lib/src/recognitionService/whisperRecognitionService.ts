@@ -96,7 +96,6 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     });
   }
 
-  // Centralized send path: if force=false, send only if >= minChunkSec; if force=true, send whatever is buffered
   private async sendAudioBuffer() {
     if (!this.audioBuffer || this.durSecOfBuffer(this.audioBuffer) === 0) {
       console.warn('No audio to send, skipping flush');
@@ -145,6 +144,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
     this.shouldAccumulateBuffer = true; // If not already accumulating, start accumulating audio
     this.prematureBufferLength = null; // Reset premature buffer length
     this.isSpeaking = true;
+    this.speechStartHandler?.(); // Notify speech start handler
     console.log('Speech started');
   }
 
@@ -182,6 +182,7 @@ export class WhisperRecognitionService extends RecognitionServiceCallbackHandlin
       if (secSinceFalseSpeechEnd >= this.options.secToWaitBeforeSendingSmallChunk!) {
         console.log('Sending premature buffer after waiting');
         this.prematureBufferLength = null;
+        this.speechEndHandler?.();
         this.shouldAccumulateBuffer = false; // Reset accumulation state
         await this.sendAudioBuffer();
       }
