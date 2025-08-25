@@ -14,7 +14,12 @@ export default defineNuxtConfig({
   ],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
-    openaiApiKey: process.env.OPENAI_API_KEY
+    openaiApiKey: '',
+    public: {
+      godzillaUrl: '',
+      speachesPort: 8000,
+      speachesApiKey: '',
+    }
   },
   // nitro: {
   //   routeRules: {

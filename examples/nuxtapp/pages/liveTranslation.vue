@@ -32,6 +32,8 @@ import { WhisperRecognitionService } from 'speech-utils/recognitionService/whisp
 
 import { getRandomSentence } from 'speech-utils/tests/testManuscript.js'
 
+const config = useRuntimeConfig();
+
 const keys = useMagicKeys();
 
 let transcriptCounter = 0;
@@ -47,16 +49,29 @@ whenever(keys.t, () => {
   allTranscripts.value.push({ id: transcriptCounter++, text: getRandomSentence() });
 })
 
+// Godzilla server
 const whisperRecogniton = new WhisperRecognitionService({
-  url: 'http://localhost:8000/v1',
-  model: 'Systran/faster-whisper-large-v3',
-  key: 'speaches',
-  lang: 'sv',
+  url: config.public.godzillaUrl + ':' + config.public.speachesPort + '/v1',
   mode: 'translate',
+  model: 'Systran/faster-whisper-large-v3',
+  key: config.public.speachesApiKey,
+  lang: 'sv',
   maxChunkSec: 7,
   minChunkSec: 2,
   secToWaitBeforeSendingSmallChunk: 2,
 });
+
+// Localhost
+// const whisperRecogniton = new WhisperRecognitionService({
+//   url: 'http://localhost:8000/v1',
+//   model: 'Systran/faster-whisper-large-v3',
+//   key: 'speaches',
+//   lang: 'sv',
+//   mode: 'translate',
+//   maxChunkSec: 7,
+//   minChunkSec: 2,
+//   secToWaitBeforeSendingSmallChunk: 2,
+// });
 
 const interimTranscript = ref('');
 // const { history } = useRefHistory(latestTranscript);
